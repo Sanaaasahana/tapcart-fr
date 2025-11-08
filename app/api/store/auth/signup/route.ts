@@ -17,10 +17,24 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      return NextResponse.json({ error: "Invalid email format" }, { status: 400 })
+    }
+
+    // Validate store ID format (alphanumeric, no spaces)
+    if (!/^[a-zA-Z0-9]+$/.test(storeId)) {
+      return NextResponse.json(
+        { error: "Store ID must contain only letters and numbers" },
+        { status: 400 }
+      )
+    }
+
     // Demo: store a simple hash placeholder. Replace with bcrypt in real app
     const passwordHash = `sha:${Buffer.from(password).toString("base64")}`
 
-    await createPendingStore(storeId, email, passwordHash)
+    await createPendingStore(storeId.trim(), email.trim(), passwordHash)
 
     return NextResponse.json({
       success: true,
@@ -28,11 +42,55 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error("Signup error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    const errorMessage = error instanceof Error ? error.message : "Unknown error"
+    
+    // Check if it's a database connection error
+    if (errorMessage.includes("DATABASE_URL") || errorMessage.includes("connection")) {
+      return NextResponse.json(
+        { error: "Database connection error. Please check your database configuration." },
+        { status: 500 }
+      )
+    }
+    
+    // Check if it's a table doesn't exist error
+    if (errorMessage.includes("does not exist") || errorMessage.includes("relation")) {
+      return NextResponse.json(
+        { error: "Database tables not initialized. Please run the database setup first at /setup" },
+        { status: 500 }
+      )
+    }
+    
+    // Check if it's a duplicate key error
+    if (errorMessage.includes("duplicate") || errorMessage.includes("unique")) {
+      return NextResponse.json(
+        { error: "Store ID already exists. Please choose a different Store ID." },
+        { status: 400 }
+      )
+    }
+    
+    return NextResponse.json(
+      { error: "Internal server error", details: errorMessage },
+      { status: 500 }
+    )
   }
 }
 
 export async function GET() {
-  const stores = await listStores()
-  return NextResponse.json({ stores })
+  try {
+    const stores = await listStores()
+    return NextResponse.json({ stores })
+  } catch (error) {
+    console.error("List stores error:", error)
+    const errorMessage = error instanceof Error ? error.message : "Unknown error"
+    
+    // If table doesn't exist, return empty array
+    if (errorMessage.includes("does not exist") || errorMessage.includes("relation")) {
+      return NextResponse.json({ stores: [] })
+    }
+    
+    return NextResponse.json(
+      { error: "Failed to load stores", details: errorMessage },
+      { status: 500 }
+    )
+  }
 }
