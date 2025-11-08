@@ -44,6 +44,26 @@ function getSql() {
 // Stores
 export async function createPendingStore(storeId: string, email: string, passwordHash: string): Promise<void> {
   const sql = getSql()
+  
+  // Ensure stores table exists
+  try {
+    await sql`
+      CREATE TABLE IF NOT EXISTS stores (
+        id SERIAL PRIMARY KEY,
+        store_id VARCHAR(50) UNIQUE NOT NULL,
+        password_hash VARCHAR(255) NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        status VARCHAR(20) DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        approved_at TIMESTAMP NULL,
+        approved_by VARCHAR(255) NULL
+      )
+    `
+  } catch (tableError) {
+    // Table might already exist, continue
+    console.log("Table creation check:", tableError)
+  }
+  
   await sql`insert into stores (store_id, email, password_hash, status)
             values (${storeId}, ${email}, ${passwordHash}, 'pending')
             on conflict (store_id) do nothing`
