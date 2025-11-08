@@ -110,7 +110,7 @@ export default function StoreExportPage() {
     const selectedProducts = items.filter(item => selectedItems.has(item.id))
     const links = selectedProducts.map(product => {
       const productId = product.custom_id || product.id.toString()
-      return `${storeName}/${productId}/cart.com`
+      return `https://tapcart-fr.onrender.com/customer?storeId=${storeName}&productId=${productId}`
     })
     
     return links.join('\n')
@@ -133,7 +133,7 @@ export default function StoreExportPage() {
         product.category,
         product.price.toString(),
         product.stock.toString(),
-        `${storeName}/${product.custom_id || product.id}/cart.com`
+        `https://tapcart-fr.onrender.com/customer?storeId=${storeName}&productId=${product.custom_id || product.id}`
       ])
     ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n')
 
@@ -158,7 +158,7 @@ export default function StoreExportPage() {
     }
 
     const links = productsToExport.map(product => 
-      `${storeName}/${product.custom_id || product.id}/cart.com`
+      `https://tapcart-fr.onrender.com/customer?storeId=${storeName}&productId=${product.custom_id || product.id}`
     )
 
     // Create CSV content with proper CSV formatting
@@ -298,7 +298,7 @@ export default function StoreExportPage() {
                 </div>
                 {storeName && (
                   <div className="text-sm text-slate-500">
-                    Links will be formatted as: <code className="bg-slate-100 px-2 py-1 rounded">{storeName}/product-id/cart.com</code>
+                    Links will be formatted as: <code className="bg-slate-100 px-2 py-1 rounded">https://tapcart-fr.onrender.com/customer?storeId={storeName}&productId=product-id</code>
                   </div>
                 )}
               </div>
@@ -346,7 +346,7 @@ export default function StoreExportPage() {
                       </div>
                       <div className="mt-2">
                         <code className="text-xs bg-slate-100 px-2 py-1 rounded">
-                          {storeName}/{item.custom_id || item.id}/cart.com
+                          https://tapcart-fr.onrender.com/customer?storeId={storeName}&productId={item.custom_id || item.id}
                         </code>
                       </div>
                     </div>
