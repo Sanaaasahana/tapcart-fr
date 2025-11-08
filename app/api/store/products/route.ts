@@ -8,6 +8,43 @@ function getSql() {
   return neon(url)
 }
 
+async function ensureProductsTable(sql: any) {
+  try {
+    // Create products table if it doesn't exist
+    await sql`
+      CREATE TABLE IF NOT EXISTS products (
+        id SERIAL PRIMARY KEY,
+        store_id VARCHAR(50),
+        name VARCHAR(255) NOT NULL,
+        stock INTEGER DEFAULT 0,
+        price DECIMAL(10,2) DEFAULT 0.00,
+        category VARCHAR(100) DEFAULT 'General',
+        custom_id VARCHAR(50),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `
+    
+    // Ensure columns exist (for existing tables)
+    try {
+      await sql`alter table products add column if not exists category varchar(100) default 'General'`
+    } catch (e) {
+      // Column might already exist
+    }
+    try {
+      await sql`alter table products add column if not exists stock integer default 1`
+    } catch (e) {
+      // Column might already exist
+    }
+    try {
+      await sql`alter table products add column if not exists custom_id varchar(50)`
+    } catch (e) {
+      // Column might already exist
+    }
+  } catch (tableError) {
+    console.log("Table creation check:", tableError)
+  }
+}
+
 export async function GET() {
   try {
     const session = await getStoreSession()
@@ -16,9 +53,8 @@ export async function GET() {
     }
     const sql = getSql()
 
-    // Ensure category column exists
-    await sql`alter table products add column if not exists category varchar(100) default 'General'`
-    await sql`alter table products add column if not exists stock integer default 1`
+    // Ensure products table exists
+    await ensureProductsTable(sql)
 
     const items = await sql`select id, store_id, name, coalesce(category,'General') as category, custom_id, (price::float8) as price, coalesce(stock,1)::int as stock from products where store_id = ${session.storeId} order by id desc`
     const categoryCounts = await sql`select coalesce(category,'General') as category, count(*)::int as count, sum(coalesce(stock,1))::int as total_stock from products where store_id = ${session.storeId} group by category order by category`
@@ -26,7 +62,11 @@ export async function GET() {
     return NextResponse.json({ items: items as any, categoryCounts: categoryCounts as any })
   } catch (err) {
     console.error("Products GET error", err)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    const errorMessage = err instanceof Error ? err.message : "Unknown error"
+    return NextResponse.json(
+      { error: "Internal server error", details: errorMessage },
+      { status: 500 }
+    )
   }
 }
 
@@ -41,9 +81,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid payload" }, { status: 400 })
     }
     const sql = getSql()
-    await sql`alter table products add column if not exists category varchar(100) default 'General'`
-    await sql`alter table products add column if not exists custom_id varchar(50)`
-    await sql`alter table products add column if not exists stock integer default 1`
+    
+    // Ensure products table exists
+    await ensureProductsTable(sql)
 
     // Check if custom ID already exists for this store
     const existing = await sql`select 1 from products where store_id = ${session.storeId} and custom_id = ${customId} limit 1`
@@ -75,7 +115,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true })
   } catch (err) {
     console.error("Products POST error", err)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    const errorMessage = err instanceof Error ? err.message : "Unknown error"
+    return NextResponse.json(
+      { error: "Internal server error", details: errorMessage },
+      { status: 500 }
+    )
   }
 }
 
@@ -88,8 +132,9 @@ export async function PATCH(request: NextRequest) {
     const { id, name, customId, category, price } = await request.json()
     if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 })
     const sql = getSql()
-    await sql`alter table products add column if not exists category varchar(100) default 'General'`
-    await sql`alter table products add column if not exists custom_id varchar(50)`
+    
+    // Ensure products table exists
+    await ensureProductsTable(sql)
 
     // Check if custom ID already exists for this store (excluding current item)
     if (customId) {
@@ -103,7 +148,11 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ success: true })
   } catch (err) {
     console.error("Products PATCH error", err)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    const errorMessage = err instanceof Error ? err.message : "Unknown error"
+    return NextResponse.json(
+      { error: "Internal server error", details: errorMessage },
+      { status: 500 }
+    )
   }
 }
 
@@ -116,10 +165,18 @@ export async function DELETE(request: NextRequest) {
     const { id } = await request.json()
     if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 })
     const sql = getSql()
+    
+    // Ensure products table exists
+    await ensureProductsTable(sql)
+    
     await sql`delete from products where id = ${id} and store_id = ${session.storeId}`
     return NextResponse.json({ success: true })
   } catch (err) {
     console.error("Products DELETE error", err)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    const errorMessage = err instanceof Error ? err.message : "Unknown error"
+    return NextResponse.json(
+      { error: "Internal server error", details: errorMessage },
+      { status: 500 }
+    )
   }
 } 
