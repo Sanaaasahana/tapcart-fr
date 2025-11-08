@@ -71,6 +71,24 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Ensure products table exists
+    try {
+      await sql`
+        CREATE TABLE IF NOT EXISTS products (
+          id SERIAL PRIMARY KEY,
+          store_id VARCHAR(50),
+          name VARCHAR(255) NOT NULL,
+          stock INTEGER DEFAULT 0,
+          price DECIMAL(10,2) DEFAULT 0.00,
+          category VARCHAR(100) DEFAULT 'General',
+          custom_id VARCHAR(50),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `
+    } catch (tableError) {
+      console.log("Products table check:", tableError)
+    }
+
     // Get products and verify stock
     const productIds = cart.map((item: any) => item.product_id)
     const products = await sql`
