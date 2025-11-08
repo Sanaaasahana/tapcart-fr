@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, Suspense } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ShoppingCart, Trash2, Checkout, Radio, X, CheckCircle } from "lucide-react"
@@ -26,6 +26,34 @@ interface CartItem {
   quantity: number
 }
 
+// Component to handle URL parameters (wrapped in Suspense)
+function UrlParamHandler({ 
+  onAddProduct 
+}: { 
+  onAddProduct: (productId: string, storeId: string) => Promise<void> 
+}) {
+  const searchParams = useSearchParams()
+  const [hasProcessedUrlParams, setHasProcessedUrlParams] = useState(false)
+
+  useEffect(() => {
+    if (hasProcessedUrlParams) return
+
+    const storeId = searchParams.get("storeId")
+    const productId = searchParams.get("productId")
+
+    if (storeId && productId) {
+      setHasProcessedUrlParams(true)
+      // Add product to cart when page loads with URL parameters
+      // Use a small delay to ensure cart state is initialized
+      setTimeout(() => {
+        onAddProduct(productId, storeId)
+      }, 100)
+    }
+  }, [searchParams, hasProcessedUrlParams, onAddProduct])
+
+  return null
+}
+
 export default function CustomerPage() {
   const [cart, setCart] = useState<CartItem[]>([])
   const [isNfcSupported, setIsNfcSupported] = useState(false)
@@ -41,8 +69,6 @@ export default function CustomerPage() {
   const [discount, setDiscount] = useState(0)
   const { toast } = useToast()
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const [hasProcessedUrlParams, setHasProcessedUrlParams] = useState(false)
 
   useEffect(() => {
     // Check NFC support
@@ -57,22 +83,6 @@ export default function CustomerPage() {
     }
   }, [])
 
-  // Handle URL parameters to add product to cart
-  useEffect(() => {
-    if (hasProcessedUrlParams) return
-
-    const storeId = searchParams.get("storeId")
-    const productId = searchParams.get("productId")
-
-    if (storeId && productId) {
-      setHasProcessedUrlParams(true)
-      // Add product to cart when page loads with URL parameters
-      // Use a small delay to ensure cart state is initialized
-      setTimeout(() => {
-        handleAddProductFromUrl(productId, storeId)
-      }, 100)
-    }
-  }, [searchParams, hasProcessedUrlParams, handleAddProductFromUrl])
 
   useEffect(() => {
     // Save cart to localStorage
@@ -527,6 +537,9 @@ export default function CustomerPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <Suspense fallback={null}>
+        <UrlParamHandler onAddProduct={handleAddProductFromUrl} />
+      </Suspense>
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
