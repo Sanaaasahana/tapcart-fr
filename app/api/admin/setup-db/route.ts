@@ -179,10 +179,10 @@ export async function POST() {
 
     // Create default admin user
     console.log("Creating default admin user...")
-    const hashedPassword = simpleHash("Sm2226#")
+    const hashedPassword = simpleHash("nfc12345")
     await sql`
       INSERT INTO admin_users (email, password_hash) 
-      VALUES ('sahanapradeep2207@gmail.com', ${hashedPassword})
+      VALUES ('nfctapcart@gmail.com', ${hashedPassword})
       ON CONFLICT (email) 
       DO UPDATE SET password_hash = EXCLUDED.password_hash
     `
@@ -203,8 +203,8 @@ export async function POST() {
         "otp_verifications",
       ],
       adminCredentials: {
-        email: "sahanapradeep2207@gmail.com",
-        password: "Sm2226#",
+        email: "nfctapcart@gmail.com",
+        password: "nfc12345",
       },
     })
   } catch (error) {
