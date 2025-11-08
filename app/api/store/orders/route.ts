@@ -8,6 +8,43 @@ function getSql() {
   return neon(url)
 }
 
+async function ensureOrdersTables(sql: any) {
+  try {
+    await sql`
+      CREATE TABLE IF NOT EXISTS orders (
+        id SERIAL PRIMARY KEY,
+        order_id VARCHAR(50) UNIQUE NOT NULL,
+        store_id VARCHAR(50),
+        customer_phone VARCHAR(20) NOT NULL,
+        customer_name VARCHAR(255),
+        total_amount DECIMAL(10,2) NOT NULL,
+        discount_amount DECIMAL(10,2) DEFAULT 0.00,
+        final_amount DECIMAL(10,2) NOT NULL,
+        coupon_code VARCHAR(50),
+        payment_method VARCHAR(20) NOT NULL,
+        payment_status VARCHAR(20) DEFAULT 'pending',
+        order_status VARCHAR(20) DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        paid_at TIMESTAMP NULL,
+        approved_at TIMESTAMP NULL
+      )
+    `
+    await sql`
+      CREATE TABLE IF NOT EXISTS order_items (
+        id SERIAL PRIMARY KEY,
+        order_id VARCHAR(50),
+        product_id INTEGER,
+        product_name VARCHAR(255) NOT NULL,
+        quantity INTEGER NOT NULL,
+        unit_price DECIMAL(10,2) NOT NULL,
+        total_price DECIMAL(10,2) NOT NULL
+      )
+    `
+  } catch (tableError) {
+    console.log("Table creation check:", tableError)
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getStoreSession()
@@ -16,6 +53,9 @@ export async function GET(request: NextRequest) {
     }
 
     const sql = getSql()
+    
+    // Ensure orders tables exist
+    await ensureOrdersTables(sql)
 
     // Get all orders for this store
     const ordersResult = await sql`
@@ -43,7 +83,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ orders: ordersWithItems })
   } catch (error) {
     console.error("Orders GET error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    const errorMessage = error instanceof Error ? error.message : "Unknown error"
+    return NextResponse.json(
+      { error: "Internal server error", details: errorMessage },
+      { status: 500 }
+    )
   }
 }
 
