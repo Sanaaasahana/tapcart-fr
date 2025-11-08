@@ -39,35 +39,58 @@ export default function CustomerPage() {
   const [paymentMethod, setPaymentMethod] = useState("")
   const [couponCode, setCouponCode] = useState("")
   const [discount, setDiscount] = useState(0)
+  const [isMounted, setIsMounted] = useState(false)
   const { toast } = useToast()
   const router = useRouter()
   const [hasProcessedUrlParams, setHasProcessedUrlParams] = useState(false)
   const [isCartLoaded, setIsCartLoaded] = useState(false)
 
+  // Ensure component is mounted on client side
   useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
+  useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') return
+
     // Check NFC support
     if ("NDEFReader" in window) {
       setIsNfcSupported(true)
     }
 
     // Load cart from localStorage
-    const savedCart = localStorage.getItem("customer_cart")
-    if (savedCart) {
-      try {
-        setCart(JSON.parse(savedCart))
-      } catch (error) {
-        console.error("Error parsing cart from localStorage:", error)
+    try {
+      const savedCart = localStorage.getItem("customer_cart")
+      if (savedCart) {
+        const parsedCart = JSON.parse(savedCart)
+        if (Array.isArray(parsedCart)) {
+          setCart(parsedCart)
+        }
       }
+    } catch (error) {
+      console.error("Error parsing cart from localStorage:", error)
+    } finally {
+      setIsCartLoaded(true)
     }
-    setIsCartLoaded(true)
   }, [])
 
   useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') return
+    
     // Save cart to localStorage
-    localStorage.setItem("customer_cart", JSON.stringify(cart))
+    try {
+      localStorage.setItem("customer_cart", JSON.stringify(cart))
+    } catch (error) {
+      console.error("Error saving cart to localStorage:", error)
+    }
   }, [cart])
 
   const handleAddProductFromUrl = useCallback(async (productId: string, storeId: string) => {
+    // Only run on client side
+    if (typeof window === 'undefined') return
+
     try {
       const response = await fetch(`/api/customer/product?productId=${productId}&storeId=${storeId}`)
       const data = await response.json()
@@ -79,15 +102,29 @@ export default function CustomerPage() {
           variant: "destructive",
         })
         // Clean up URL parameters even on error
-        const newUrl = window.location.pathname
-        window.history.replaceState({}, "", newUrl)
+        if (typeof window !== 'undefined') {
+          const newUrl = window.location.pathname
+          window.history.replaceState({}, "", newUrl)
+        }
         return
       }
 
       const product = data.product
 
       // Get current cart from state or localStorage
-      const currentCart = cart.length > 0 ? cart : (localStorage.getItem("customer_cart") ? JSON.parse(localStorage.getItem("customer_cart")!) : [])
+      let currentCart: CartItem[] = []
+      if (cart.length > 0) {
+        currentCart = cart
+      } else if (typeof window !== 'undefined') {
+        try {
+          const savedCart = localStorage.getItem("customer_cart")
+          if (savedCart) {
+            currentCart = JSON.parse(savedCart)
+          }
+        } catch (error) {
+          console.error("Error reading cart from localStorage:", error)
+        }
+      }
 
       // Check if product already in cart
       const existingItem = currentCart.find((item: CartItem) => item.product_id === product.id)
@@ -97,8 +134,10 @@ export default function CustomerPage() {
           description: "This product is already in your cart. You can only add it once.",
         })
         // Clean up URL parameters
-        const newUrl = window.location.pathname
-        window.history.replaceState({}, "", newUrl)
+        if (typeof window !== 'undefined') {
+          const newUrl = window.location.pathname
+          window.history.replaceState({}, "", newUrl)
+        }
         return
       }
 
@@ -110,8 +149,10 @@ export default function CustomerPage() {
           variant: "destructive",
         })
         // Clean up URL parameters
-        const newUrl = window.location.pathname
-        window.history.replaceState({}, "", newUrl)
+        if (typeof window !== 'undefined') {
+          const newUrl = window.location.pathname
+          window.history.replaceState({}, "", newUrl)
+        }
         return
       }
 
@@ -127,7 +168,14 @@ export default function CustomerPage() {
 
       const updatedCart = [...currentCart, newItem]
       setCart(updatedCart)
-      localStorage.setItem("customer_cart", JSON.stringify(updatedCart))
+      
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem("customer_cart", JSON.stringify(updatedCart))
+        } catch (error) {
+          console.error("Error saving cart to localStorage:", error)
+        }
+      }
       
       toast({
         title: "Product added",
@@ -135,44 +183,54 @@ export default function CustomerPage() {
       })
 
       // Clean up URL parameters after adding to cart
-      const newUrl = window.location.pathname
-      window.history.replaceState({}, "", newUrl)
+      if (typeof window !== 'undefined') {
+        const newUrl = window.location.pathname
+        window.history.replaceState({}, "", newUrl)
+      }
     } catch (error) {
+      console.error("Error adding product from URL:", error)
       toast({
         title: "Error",
         description: "Could not add product to cart. Please try again.",
         variant: "destructive",
       })
       // Clean up URL parameters even on error
-      const newUrl = window.location.pathname
-      window.history.replaceState({}, "", newUrl)
+      if (typeof window !== 'undefined') {
+        const newUrl = window.location.pathname
+        window.history.replaceState({}, "", newUrl)
+      }
     }
   }, [cart, toast])
 
   // Handle URL parameters to add product to cart
   useEffect(() => {
-    if (hasProcessedUrlParams) return
+    // Only run on client side
     if (typeof window === 'undefined') return
+    if (hasProcessedUrlParams) return
     if (!isCartLoaded) return // Wait for cart to be loaded
 
     // Read URL parameters directly from window.location (doesn't require Suspense)
-    const urlParams = new URLSearchParams(window.location.search)
-    const storeId = urlParams.get("storeId")
-    const productId = urlParams.get("productId")
+    try {
+      const urlParams = new URLSearchParams(window.location.search)
+      const storeId = urlParams.get("storeId")
+      const productId = urlParams.get("productId")
 
-    if (storeId && productId) {
-      setHasProcessedUrlParams(true)
-      // Wait a bit for everything to be ready
-      setTimeout(() => {
-        handleAddProductFromUrl(productId, storeId).catch((error) => {
-          console.error("Error adding product from URL:", error)
-          toast({
-            title: "Error",
-            description: "Could not add product to cart. Please try again.",
-            variant: "destructive",
+      if (storeId && productId) {
+        setHasProcessedUrlParams(true)
+        // Wait a bit for everything to be ready
+        setTimeout(() => {
+          handleAddProductFromUrl(productId, storeId).catch((error: unknown) => {
+            console.error("Error adding product from URL:", error)
+            toast({
+              title: "Error",
+              description: "Could not add product to cart. Please try again.",
+              variant: "destructive",
+            })
           })
-        })
-      }, 100)
+        }, 100)
+      }
+    } catch (error) {
+      console.error("Error reading URL parameters:", error)
     }
   }, [hasProcessedUrlParams, handleAddProductFromUrl, isCartLoaded, toast])
 
@@ -539,6 +597,15 @@ export default function CustomerPage() {
   }
 
   const totals = calculateTotal()
+
+  // Prevent hydration mismatch by not rendering until mounted
+  if (!isMounted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <div className="text-white text-lg">Loading...</div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
