@@ -47,6 +47,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Order already paid" }, { status: 400 })
     }
 
+    // Get order items to update inventory
+    const orderItems = await sql`
+      select product_id, quantity from order_items
+      where order_id = ${orderId}
+    `
+
     // Update order status
     await sql`
       update orders
@@ -56,6 +62,24 @@ export async function POST(request: NextRequest) {
           approved_at = now()
       where order_id = ${orderId} and store_id = ${session.storeId}
     `
+
+    // Update inventory (reduce stock) after payment is confirmed
+    for (const item of orderItems) {
+      await sql`
+        update products
+        set stock = stock - ${item.quantity}
+        where id = ${item.product_id} and store_id = ${session.storeId}
+      `
+    }
+
+    // Update coupon usage if coupon was used
+    if (order.coupon_code) {
+      await sql`
+        update coupons
+        set used_count = used_count + 1
+        where code = ${order.coupon_code} and store_id = ${session.storeId}
+      `
+    }
 
     // Send SMS to customer
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
