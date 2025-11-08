@@ -120,13 +120,18 @@ export default function StoreLoginPage() {
             </Button>
           </form>
 
-          <div className="mt-6 text-center">
+          <div className="mt-6 space-y-3 text-center">
             <p className="text-slate-600">
               {"Don't have an account? "}
               <Link href="/store/signup" className="text-blue-600 hover:text-blue-700 font-medium">
                 Sign up here
               </Link>
             </p>
+            <div className="pt-3 border-t border-slate-200">
+              <Link href="/customer" className="text-sm text-slate-600 hover:text-slate-900 font-medium">
+                Go to Customer Shopping Page →
+              </Link>
+            </div>
           </div>
         </CardContent>
       </Card>
