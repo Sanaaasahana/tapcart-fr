@@ -1,11 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ShoppingCart, Trash2, Checkout, Radio, X, CheckCircle } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import {
   Dialog,
   DialogContent,
@@ -41,6 +41,8 @@ export default function CustomerPage() {
   const [discount, setDiscount] = useState(0)
   const { toast } = useToast()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const [hasProcessedUrlParams, setHasProcessedUrlParams] = useState(false)
 
   useEffect(() => {
     // Check NFC support
@@ -55,10 +57,109 @@ export default function CustomerPage() {
     }
   }, [])
 
+  // Handle URL parameters to add product to cart
+  useEffect(() => {
+    if (hasProcessedUrlParams) return
+
+    const storeId = searchParams.get("storeId")
+    const productId = searchParams.get("productId")
+
+    if (storeId && productId) {
+      setHasProcessedUrlParams(true)
+      // Add product to cart when page loads with URL parameters
+      // Use a small delay to ensure cart state is initialized
+      setTimeout(() => {
+        handleAddProductFromUrl(productId, storeId)
+      }, 100)
+    }
+  }, [searchParams, hasProcessedUrlParams, handleAddProductFromUrl])
+
   useEffect(() => {
     // Save cart to localStorage
     localStorage.setItem("customer_cart", JSON.stringify(cart))
   }, [cart])
+
+  const handleAddProductFromUrl = useCallback(async (productId: string, storeId: string) => {
+    try {
+      const response = await fetch(`/api/customer/product?productId=${productId}&storeId=${storeId}`)
+      const data = await response.json()
+
+      if (!response.ok) {
+        toast({
+          title: "Product not found",
+          description: data.error || "This product is not available in the store inventory.",
+          variant: "destructive",
+        })
+        // Clean up URL parameters even on error
+        const newUrl = window.location.pathname
+        window.history.replaceState({}, "", newUrl)
+        return
+      }
+
+      const product = data.product
+
+      // Get current cart from state or localStorage
+      const currentCart = cart.length > 0 ? cart : (localStorage.getItem("customer_cart") ? JSON.parse(localStorage.getItem("customer_cart")!) : [])
+
+      // Check if product already in cart
+      const existingItem = currentCart.find((item: CartItem) => item.product_id === product.id)
+      if (existingItem) {
+        toast({
+          title: "Product already in cart",
+          description: "This product is already in your cart. You can only add it once.",
+        })
+        // Clean up URL parameters
+        const newUrl = window.location.pathname
+        window.history.replaceState({}, "", newUrl)
+        return
+      }
+
+      // Check if cart has items from different store
+      if (currentCart.length > 0 && currentCart[0].store_id !== storeId) {
+        toast({
+          title: "Different store",
+          description: "You can only add products from the same store. Please clear your cart first.",
+          variant: "destructive",
+        })
+        // Clean up URL parameters
+        const newUrl = window.location.pathname
+        window.history.replaceState({}, "", newUrl)
+        return
+      }
+
+      // Add to cart
+      const newItem: CartItem = {
+        id: Date.now(),
+        product_id: product.id,
+        product_name: product.name,
+        store_id: storeId,
+        price: parseFloat(product.price),
+        quantity: 1,
+      }
+
+      const updatedCart = [...currentCart, newItem]
+      setCart(updatedCart)
+      localStorage.setItem("customer_cart", JSON.stringify(updatedCart))
+      
+      toast({
+        title: "Product added",
+        description: `${product.name} has been added to your cart.`,
+      })
+
+      // Clean up URL parameters after adding to cart
+      const newUrl = window.location.pathname
+      window.history.replaceState({}, "", newUrl)
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Could not add product to cart. Please try again.",
+        variant: "destructive",
+      })
+      // Clean up URL parameters even on error
+      const newUrl = window.location.pathname
+      window.history.replaceState({}, "", newUrl)
+    }
+  }, [cart, toast])
 
   const handleNfcRead = async () => {
     if (!isNfcSupported) {
