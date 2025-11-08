@@ -7,6 +7,25 @@ function getSql() {
   return neon(url)
 }
 
+async function ensureProductsTable(sql: any) {
+  try {
+    await sql`
+      CREATE TABLE IF NOT EXISTS products (
+        id SERIAL PRIMARY KEY,
+        store_id VARCHAR(50),
+        name VARCHAR(255) NOT NULL,
+        stock INTEGER DEFAULT 0,
+        price DECIMAL(10,2) DEFAULT 0.00,
+        category VARCHAR(100) DEFAULT 'General',
+        custom_id VARCHAR(50),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `
+  } catch (tableError) {
+    console.log("Table creation check:", tableError)
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
@@ -18,6 +37,9 @@ export async function GET(request: NextRequest) {
     }
 
     const sql = getSql()
+    
+    // Ensure products table exists
+    await ensureProductsTable(sql)
 
     // Get product by custom_id or id
     let product
@@ -49,7 +71,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ product: product[0] })
   } catch (error) {
     console.error("Product GET error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    const errorMessage = error instanceof Error ? error.message : "Unknown error"
+    return NextResponse.json(
+      { error: "Internal server error", details: errorMessage },
+      { status: 500 }
+    )
   }
 }
 
