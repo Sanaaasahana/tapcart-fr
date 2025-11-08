@@ -151,24 +151,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Update inventory (reduce stock)
-    for (const item of cart) {
-      await sql`
-        update products
-        set stock = stock - ${item.quantity}
-        where id = ${item.product_id} and store_id = ${storeId}
-      `
-    }
-
-    // Update coupon usage if coupon was used
-    if (couponCode) {
-      await sql`
-        update coupons
-        set used_count = used_count + 1
-        where code = ${couponCode} and store_id = ${storeId}
-      `
-    }
-
     // Update payment status and paid_at for card/UPI
     if (paymentMethod !== "pay_at_desk") {
       await sql`
@@ -176,6 +158,30 @@ export async function POST(request: NextRequest) {
         set payment_status = 'completed', paid_at = now(), order_status = 'confirmed'
         where order_id = ${orderId}
       `
+      
+      // Update inventory (reduce stock) only after payment is confirmed
+      for (const item of cart) {
+        await sql`
+          update products
+          set stock = stock - ${item.quantity}
+          where id = ${item.product_id} and store_id = ${storeId}
+        `
+      }
+
+      // Update coupon usage if coupon was used
+      if (couponCode) {
+        await sql`
+          update coupons
+          set used_count = used_count + 1
+          where code = ${couponCode} and store_id = ${storeId}
+        `
+      }
+    } else {
+      // For pay_at_desk, inventory will be updated when payment is approved
+      // Update coupon usage if coupon was used (will be applied when payment is confirmed)
+      if (couponCode) {
+        // Note: Coupon usage will be updated when payment is confirmed
+      }
     }
 
     // Store bill data in order (we'll generate it on-demand via API route)
