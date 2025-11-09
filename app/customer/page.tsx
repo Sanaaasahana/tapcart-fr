@@ -790,6 +790,16 @@ export default function CustomerPage() {
     }
   }
 
+  // Calculate totals - use empty values if not ready to prevent hydration mismatch
+  // Use useMemo to prevent recalculation on every render
+  const totals = useMemo(() => {
+    // Only calculate if mounted and cart is loaded, otherwise return empty totals
+    if (!isMounted || !isCartLoaded) {
+      return { subtotal: 0, discount: 0, total: 0 }
+    }
+    return calculateTotal()
+  }, [cart, discount, isMounted, isCartLoaded])
+
   // Prevent hydration mismatch by not rendering until mounted and cart is loaded
   // This ensures server and client render the same initial content
   if (typeof window === 'undefined' || !isMounted || !isCartLoaded) {
@@ -799,10 +809,6 @@ export default function CustomerPage() {
       </div>
     )
   }
-
-  // Calculate totals only after component is mounted and cart is loaded to prevent hydration mismatch
-  // Use useMemo to prevent recalculation on every render
-  const totals = useMemo(() => calculateTotal(), [cart, discount])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
