@@ -3,13 +3,14 @@
 import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ShoppingCart, Trash2, Check as Checkout, Radio, CheckCircle } from "lucide-react"
+import { ShoppingCart, Trash2, Check as Checkout, Radio, CheckCircle, X, Download } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 interface CartItem {
   id: number
@@ -19,6 +20,9 @@ interface CartItem {
   price: number
   quantity: number
 }
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
 
 export default function CustomerPage() {
   const [cart, setCart] = useState<CartItem[]>([])
@@ -34,10 +38,44 @@ export default function CustomerPage() {
   const [couponCode, setCouponCode] = useState("")
   const [discount, setDiscount] = useState(0)
   const [isMounted, setIsMounted] = useState(false)
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false)
+  const [confirmedOrderId, setConfirmedOrderId] = useState<string | null>(null)
+  const [confirmedBillUrl, setConfirmedBillUrl] = useState<string | null>(null)
   const { toast } = useToast()
   const router = useRouter()
   const [hasProcessedUrlParams, setHasProcessedUrlParams] = useState(false)
   const [isCartLoaded, setIsCartLoaded] = useState(false)
+
+  // Check for payment confirmation in URL
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    
+    try {
+      const urlParams = new URLSearchParams(window.location.search)
+      const orderId = urlParams.get("orderId")
+      const paymentStatus = urlParams.get("paymentStatus")
+      const billUrl = urlParams.get("billUrl")
+      
+      if (orderId && paymentStatus === "confirmed") {
+        setPaymentConfirmed(true)
+        setConfirmedOrderId(orderId)
+        if (billUrl) {
+          setConfirmedBillUrl(decodeURIComponent(billUrl))
+        }
+        
+        // Clean up URL parameters
+        const newUrl = window.location.pathname
+        window.history.replaceState({}, "", newUrl)
+        
+        toast({
+          title: "Payment Confirmed",
+          description: `Your order ${orderId} has been confirmed successfully!`,
+        })
+      }
+    } catch (error) {
+      console.error("Error checking payment confirmation:", error)
+    }
+  }, [toast])
 
   // Ensure component is mounted on client side
   useEffect(() => {
@@ -48,13 +86,13 @@ export default function CustomerPage() {
     // Only run on client side
     if (typeof window === "undefined") return
 
-    // Check NFC support
-    if ("NDEFReader" in window) {
-      setIsNfcSupported(true)
-    }
-
-    // Load cart from localStorage
     try {
+      // Check NFC support
+      if ("NDEFReader" in window) {
+        setIsNfcSupported(true)
+      }
+
+      // Load cart from localStorage
       const savedCart = localStorage.getItem("customer_cart")
       if (savedCart) {
         const parsedCart = JSON.parse(savedCart)
@@ -63,7 +101,7 @@ export default function CustomerPage() {
         }
       }
     } catch (error) {
-      console.error("Error parsing cart from localStorage:", error)
+      console.error("Error initializing customer page:", error)
     } finally {
       setIsCartLoaded(true)
     }
@@ -591,11 +629,6 @@ export default function CustomerPage() {
       const data = await response.json()
 
       if (response.ok) {
-        toast({
-          title: "Order placed",
-          description: "Your order has been placed successfully!",
-        })
-
         // Clear cart and reset form
         setCart([])
         localStorage.removeItem("customer_cart")
@@ -609,6 +642,18 @@ export default function CustomerPage() {
 
         // Close dialog
         setIsCheckoutOpen(false)
+
+        // Show payment confirmation
+        setPaymentConfirmed(true)
+        setConfirmedOrderId(data.orderId || "")
+        if (data.billUrl) {
+          setConfirmedBillUrl(data.billUrl)
+        }
+
+        toast({
+          title: "Order placed",
+          description: "Your order has been placed successfully!",
+        })
 
         // Show success message with download link
         if (data.billUrl) {
@@ -648,6 +693,42 @@ export default function CustomerPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
+          {/* Payment Confirmation Alert */}
+          {paymentConfirmed && confirmedOrderId && (
+            <Alert className="mb-6 bg-green-900/20 border-green-500/50 text-white">
+              <CheckCircle className="h-5 w-5 text-green-400" />
+              <AlertTitle className="text-green-400 font-semibold">Payment Confirmed!</AlertTitle>
+              <AlertDescription className="text-white mt-2">
+                <p className="mb-3">
+                  Your order <strong className="font-bold">{confirmedOrderId}</strong> has been confirmed successfully.
+                </p>
+                {confirmedBillUrl && (
+                  <Button
+                    onClick={() => window.open(confirmedBillUrl, "_blank")}
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                    size="sm"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download Bill
+                  </Button>
+                )}
+                <Button
+                  onClick={() => {
+                    setPaymentConfirmed(false)
+                    setConfirmedOrderId(null)
+                    setConfirmedBillUrl(null)
+                  }}
+                  variant="ghost"
+                  className="ml-2 text-white hover:bg-white/10"
+                  size="sm"
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Dismiss
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
+
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold text-white mb-4">Customer Shopping</h1>
             <p className="text-slate-300 text-lg">Tap on NFC tags to add products to your cart</p>
