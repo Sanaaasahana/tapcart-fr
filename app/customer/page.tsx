@@ -91,11 +91,18 @@ export default function CustomerPage() {
     // Only run on client side
     if (typeof window === 'undefined') return
 
+    console.log("handleAddProductFromUrl called with:", { productId, storeId })
+
     try {
-      const response = await fetch(`/api/customer/product?productId=${encodeURIComponent(productId)}&storeId=${encodeURIComponent(storeId)}`)
+      const apiUrl = `/api/customer/product?productId=${encodeURIComponent(productId)}&storeId=${encodeURIComponent(storeId)}`
+      console.log("Fetching product from:", apiUrl)
+      
+      const response = await fetch(apiUrl)
+      console.log("API response status:", response.status)
       
       if (!response.ok) {
         const data = await response.json().catch(() => ({}))
+        console.error("API error:", data)
         toast({
           title: "Product not found",
           description: data.error || `Product ${productId} is not available in store ${storeId}.`,
@@ -108,9 +115,11 @@ export default function CustomerPage() {
       }
 
       const data = await response.json()
+      console.log("Product data received:", data)
       const product = data.product
 
       if (!product) {
+        console.error("Product not found in response")
         toast({
           title: "Product not found",
           description: "This product is not available in the store inventory.",
@@ -172,12 +181,15 @@ export default function CustomerPage() {
         quantity: 1,
       }
 
+      console.log("Adding item to cart:", newItem)
       const updatedCart = [...currentCart, newItem]
+      console.log("Updated cart:", updatedCart)
       
       // Update both state and localStorage
       setCart(updatedCart)
       try {
         localStorage.setItem("customer_cart", JSON.stringify(updatedCart))
+        console.log("Cart saved to localStorage")
       } catch (error) {
         console.error("Error saving cart to localStorage:", error)
       }
@@ -190,6 +202,7 @@ export default function CustomerPage() {
       // Clean up URL parameters after adding to cart
       const newUrl = window.location.pathname
       window.history.replaceState({}, "", newUrl)
+      console.log("URL parameters cleaned up")
     } catch (error) {
       console.error("Error adding product from URL:", error)
       toast({
@@ -205,11 +218,30 @@ export default function CustomerPage() {
 
   // Handle URL parameters to add product to cart
   useEffect(() => {
+    console.log("URL params useEffect running:", { 
+      isMounted, 
+      hasProcessedUrlParams, 
+      isCartLoaded,
+      window: typeof window !== 'undefined'
+    })
+    
     // Only run on client side
-    if (typeof window === 'undefined') return
-    if (!isMounted) return // Wait for component to be mounted
-    if (hasProcessedUrlParams) return
-    if (!isCartLoaded) return // Wait for cart to be loaded
+    if (typeof window === 'undefined') {
+      console.log("Skipping: window is undefined")
+      return
+    }
+    if (!isMounted) {
+      console.log("Skipping: not mounted yet")
+      return // Wait for component to be mounted
+    }
+    if (hasProcessedUrlParams) {
+      console.log("Skipping: already processed URL params")
+      return
+    }
+    if (!isCartLoaded) {
+      console.log("Skipping: cart not loaded yet")
+      return // Wait for cart to be loaded
+    }
 
     // Read URL parameters directly from window.location (doesn't require Suspense)
     try {
@@ -217,10 +249,15 @@ export default function CustomerPage() {
       const storeId = urlParams.get("storeId")
       const productId = urlParams.get("productId")
 
+      console.log("URL params found:", { storeId, productId })
+
       if (storeId && productId) {
+        console.log("Processing URL parameters:", { storeId, productId })
         setHasProcessedUrlParams(true)
+        
         // Wait a bit for everything to be ready, then process
         const timeoutId = setTimeout(() => {
+          console.log("Calling handleAddProductFromUrl with:", { productId, storeId })
           handleAddProductFromUrl(productId, storeId).catch((error: unknown) => {
             console.error("Error adding product from URL:", error)
             toast({
@@ -229,9 +266,13 @@ export default function CustomerPage() {
               variant: "destructive",
             })
           })
-        }, 200)
+        }, 300)
         
-        return () => clearTimeout(timeoutId)
+        return () => {
+          clearTimeout(timeoutId)
+        }
+      } else {
+        console.log("No storeId or productId in URL")
       }
     } catch (error) {
       console.error("Error reading URL parameters:", error)
