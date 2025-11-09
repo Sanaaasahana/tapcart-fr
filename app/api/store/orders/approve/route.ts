@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getStoreSession } from "@/lib/auth"
 import { neon } from "@neondatabase/serverless"
+import { sendOrderConfirmationSMS } from "@/lib/sms"
 
 function getSql() {
   const url = process.env.DATABASE_URL
@@ -82,11 +83,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Send SMS to customer
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
-    const billUrl = `${baseUrl}/api/customer/bill/${orderId}`
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://tapcart-fr.onrender.com"
+    const billUrl = `/api/customer/bill/${orderId}`
     
-    // TODO: Integrate with SMS service
-    console.log(`SMS to ${order.customer_phone}: Your order ${orderId} payment has been confirmed. Download your bill: ${billUrl}`)
+    try {
+      await sendOrderConfirmationSMS(order.customer_phone, orderId, billUrl, "pay_at_desk")
+      console.log(`Payment confirmation SMS sent to ${order.customer_phone}`)
+    } catch (error) {
+      console.error("Error sending payment confirmation SMS:", error)
+      // Don't fail the request if SMS fails - payment is still approved
+    }
 
     return NextResponse.json({
       success: true,
