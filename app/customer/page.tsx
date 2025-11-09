@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ShoppingCart, Trash2, Checkout, Radio, X, CheckCircle } from "lucide-react"
@@ -283,20 +283,20 @@ export default function CustomerPage() {
         // Set flag first to prevent re-processing
         setHasProcessedUrlParams(true)
         
-        // Use a flag to track if component is still mounted
-        let isMounted = true
+        // Use a ref to track if component is still mounted
+        const mountedRef = { current: true }
         
         // Call the function directly after a small delay to ensure ref is set
         // Use requestAnimationFrame to ensure DOM is ready
         requestAnimationFrame(() => {
           setTimeout(() => {
-            if (!isMounted) return
+            if (!mountedRef.current) return
             
             console.log("Calling handleAddProductFromUrl with:", { productId, storeId })
             const handler = handleAddProductFromUrlRef.current
             if (handler) {
               handler(productId, storeId).catch((error: unknown) => {
-                if (!isMounted) return
+                if (!mountedRef.current) return
                 console.error("Error adding product from URL:", error)
                 try {
                   toastRef.current({
@@ -312,13 +312,13 @@ export default function CustomerPage() {
               console.error("handleAddProductFromUrlRef.current is null, retrying...")
               // Retry once after a short delay
               setTimeout(() => {
-                if (!isMounted) return
+                if (!mountedRef.current) return
                 
                 const retryHandler = handleAddProductFromUrlRef.current
                 if (retryHandler) {
                   console.log("Retrying handleAddProductFromUrl with:", { productId, storeId })
                   retryHandler(productId, storeId).catch((error: unknown) => {
-                    if (!isMounted) return
+                    if (!mountedRef.current) return
                     console.error("Error adding product from URL (retry):", error)
                     try {
                       toastRef.current({
@@ -344,12 +344,12 @@ export default function CustomerPage() {
                 }
               }, 200)
             }
-          }, 100)
+          }, 150)
         })
         
         // Cleanup function to prevent state updates after unmount
         return () => {
-          isMounted = false
+          mountedRef.current = false
         }
       } else {
         console.log("No storeId or productId in URL")
@@ -472,8 +472,33 @@ export default function CustomerPage() {
 
       const product = data.product
 
+      if (!product) {
+        console.error("Product not found in response")
+        toast({
+          title: "Product not found",
+          description: "This product is not available in the store inventory.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      // Get current cart from localStorage (more reliable than state during async operations)
+      let currentCart: CartItem[] = []
+      try {
+        const savedCart = localStorage.getItem("customer_cart")
+        if (savedCart) {
+          currentCart = JSON.parse(savedCart)
+          if (!Array.isArray(currentCart)) {
+            currentCart = []
+          }
+        }
+      } catch (error) {
+        console.error("Error reading cart from localStorage:", error)
+        currentCart = []
+      }
+
       // Check if product already in cart
-      const existingItem = cart.find((item) => item.product_id === product.id)
+      const existingItem = currentCart.find((item: CartItem) => item.product_id === product.id)
       if (existingItem) {
         toast({
           title: "Product already in cart",
@@ -483,7 +508,7 @@ export default function CustomerPage() {
       }
 
       // Check if cart has items from different store
-      if (cart.length > 0 && cart[0].store_id !== storeId) {
+      if (currentCart.length > 0 && currentCart[0].store_id !== storeId) {
         toast({
           title: "Different store",
           description: "You can only add products from the same store. Please clear your cart first.",
@@ -502,12 +527,25 @@ export default function CustomerPage() {
         quantity: 1,
       }
 
-      setCart([...cart, newItem])
+      console.log("Adding item to cart:", newItem)
+      const updatedCart = [...currentCart, newItem]
+      console.log("Updated cart:", updatedCart)
+      
+      // Update both state and localStorage
+      setCart(updatedCart)
+      try {
+        localStorage.setItem("customer_cart", JSON.stringify(updatedCart))
+        console.log("Cart saved to localStorage")
+      } catch (error) {
+        console.error("Error saving cart to localStorage:", error)
+      }
+      
       toast({
         title: "Product added",
         description: `${product.name} has been added to your cart.`,
       })
     } catch (error) {
+      console.error("Error in addProductToCart:", error)
       toast({
         title: "Error",
         description: "Could not add product to cart. Please try again.",
@@ -752,8 +790,9 @@ export default function CustomerPage() {
     }
   }
 
-  // Prevent hydration mismatch by not rendering until mounted
-  if (!isMounted || !isCartLoaded) {
+  // Prevent hydration mismatch by not rendering until mounted and cart is loaded
+  // This ensures server and client render the same initial content
+  if (typeof window === 'undefined' || !isMounted || !isCartLoaded) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
         <div className="text-white text-lg">Loading...</div>
@@ -762,7 +801,8 @@ export default function CustomerPage() {
   }
 
   // Calculate totals only after component is mounted and cart is loaded to prevent hydration mismatch
-  const totals = calculateTotal()
+  // Use useMemo to prevent recalculation on every render
+  const totals = useMemo(() => calculateTotal(), [cart, discount])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
