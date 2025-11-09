@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { neon } from "@neondatabase/serverless"
+import { sendOrderConfirmationSMS } from "@/lib/sms"
 
 function getSql() {
   const url = process.env.DATABASE_URL
@@ -188,7 +189,13 @@ export async function POST(request: NextRequest) {
     const billUrl = `/api/customer/bill/${orderId}`
 
     // Send SMS with bill link
-    await sendSMS(phone, orderId, billUrl, paymentMethod)
+    try {
+      await sendOrderConfirmationSMS(phone, orderId, billUrl, paymentMethod)
+      console.log(`Order confirmation SMS sent to ${phone}`)
+    } catch (error) {
+      console.error("Error sending order confirmation SMS:", error)
+      // Don't fail the request if SMS fails - order is still created
+    }
 
     return NextResponse.json({
       success: true,
@@ -200,28 +207,5 @@ export async function POST(request: NextRequest) {
     console.error("Checkout error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
-}
-
-
-// Send SMS
-async function sendSMS(phone: string, orderId: string, billUrl: string, paymentMethod: string): Promise<void> {
-  // In production, integrate with SMS service like Twilio, AWS SNS, etc.
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
-  const fullBillUrl = `${baseUrl}${billUrl}`
-  
-  const message = paymentMethod === "pay_at_desk"
-    ? `Your order ${orderId} has been placed. Please pay at the desk. Bill: ${fullBillUrl}`
-    : `Your order ${orderId} has been confirmed. Download your bill: ${fullBillUrl}`
-  
-  // TODO: Integrate with SMS service
-  // Example with Twilio:
-  // const client = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-  // await client.messages.create({
-  //   body: message,
-  //   from: process.env.TWILIO_PHONE_NUMBER,
-  //   to: phone
-  // });
-  
-  console.log(`SMS to ${phone}: ${message}`)
 }
 
