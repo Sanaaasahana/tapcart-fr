@@ -1,5 +1,8 @@
 "use client"
 
+// Force dynamic rendering to prevent hydration issues
+export const dynamic = 'force-dynamic'
+
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -111,21 +114,59 @@ export default function CustomerPage() {
     // Only run on client side
     if (typeof window === 'undefined') return
 
+    // Clean and validate parameters
+    productId = productId?.trim() || ""
+    storeId = storeId?.trim() || ""
+    
+    if (!productId || !storeId) {
+      console.error("Invalid parameters:", { productId, storeId })
+      toast({
+        title: "Invalid parameters",
+        description: "Product ID and Store ID are required.",
+        variant: "destructive",
+      })
+      return
+    }
+
     console.log("handleAddProductFromUrl called with:", { productId, storeId })
 
     try {
       const apiUrl = `/api/customer/product?productId=${encodeURIComponent(productId)}&storeId=${encodeURIComponent(storeId)}`
-      console.log("Fetching product from:", apiUrl)
+      console.log("Fetching product from API:", apiUrl)
+      console.log("Full URL would be:", window.location.origin + apiUrl)
       
-      const response = await fetch(apiUrl)
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        cache: 'no-store', // Ensure we always fetch fresh data
+      })
+      
       console.log("API response status:", response.status)
+      console.log("API response headers:", Object.fromEntries(response.headers.entries()))
       
       if (!response.ok) {
-        const data = await response.json().catch(() => ({}))
-        console.error("API error:", data)
+        let errorData = {}
+        try {
+          errorData = await response.json()
+        } catch (e) {
+          const text = await response.text()
+          console.error("Failed to parse error response:", text)
+          errorData = { error: `Server error: ${response.status} ${response.statusText}` }
+        }
+        
+        console.error("API error response:", errorData)
+        console.error("Product lookup failed:", {
+          productId,
+          storeId,
+          status: response.status,
+          error: errorData
+        })
+        
         toast({
           title: "Product not found",
-          description: data.error || `Product ${productId} is not available in store ${storeId}.`,
+          description: errorData.error || `Product "${productId}" is not available in store "${storeId}". Please check if the product exists in the inventory.`,
           variant: "destructive",
         })
         // Clean up URL parameters even on error
@@ -135,14 +176,65 @@ export default function CustomerPage() {
       }
 
       const data = await response.json()
-      console.log("Product data received:", data)
-      const product = data.product
-
-      if (!product) {
-        console.error("Product not found in response")
+      console.log("Product data received from API:", data)
+      
+      if (!data || !data.product) {
+        console.error("Invalid API response structure:", data)
         toast({
-          title: "Product not found",
-          description: "This product is not available in the store inventory.",
+          title: "Invalid response",
+          description: "The server returned an invalid response. Please try again.",
+          variant: "destructive",
+        })
+        const newUrl = window.location.pathname
+        window.history.replaceState({}, "", newUrl)
+        return
+      }
+      
+      const product = data.product
+      console.log("Product found in inventory:", {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        stock: product.stock,
+        custom_id: product.custom_id,
+        store_id: product.store_id
+      })
+
+      if (!product.id || !product.name) {
+        console.error("Product data incomplete:", product)
+        toast({
+          title: "Invalid product data",
+          description: "The product data is incomplete. Please try again.",
+          variant: "destructive",
+        })
+        const newUrl = window.location.pathname
+        window.history.replaceState({}, "", newUrl)
+        return
+      }
+      
+      // Verify product has stock
+      if (product.stock <= 0) {
+        console.error("Product out of stock:", product)
+        toast({
+          title: "Product out of stock",
+          description: `"${product.name}" is currently out of stock.`,
+          variant: "destructive",
+        })
+        const newUrl = window.location.pathname
+        window.history.replaceState({}, "", newUrl)
+        return
+      }
+      
+      // Verify store_id matches
+      if (product.store_id !== storeId) {
+        console.error("Store ID mismatch:", {
+          expected: storeId,
+          actual: product.store_id,
+          product
+        })
+        toast({
+          title: "Store mismatch",
+          description: `This product belongs to a different store.`,
           variant: "destructive",
         })
         const newUrl = window.location.pathname
@@ -276,10 +368,29 @@ export default function CustomerPage() {
     // Read URL parameters directly from window.location (doesn't require Suspense)
     try {
       const urlParams = new URLSearchParams(window.location.search)
-      const storeId = urlParams.get("storeId")
-      const productId = urlParams.get("productId")
+      let storeId = urlParams.get("storeId")
+      let productId = urlParams.get("productId")
+      
+      // Trim whitespace and decode if needed
+      if (storeId) storeId = storeId.trim()
+      if (productId) productId = productId.trim()
+      
+      // Also try reading from hash if not in query params (some URL formats)
+      if (!storeId || !productId) {
+        const hash = window.location.hash
+        if (hash) {
+          const hashParams = new URLSearchParams(hash.substring(1))
+          if (!storeId) storeId = hashParams.get("storeId")?.trim() || null
+          if (!productId) productId = hashParams.get("productId")?.trim() || null
+        }
+      }
 
-      console.log("URL params found:", { storeId, productId })
+      console.log("URL params found:", { 
+        storeId, 
+        productId, 
+        rawSearch: window.location.search,
+        fullUrl: window.location.href
+      })
 
       if (storeId && productId) {
         console.log("Processing URL parameters:", { storeId, productId })
@@ -453,34 +564,115 @@ export default function CustomerPage() {
 
   const addProductToCart = async (productId: string, storeId: string) => {
     try {
+      // Clean and validate parameters
+      productId = productId?.trim() || ""
+      storeId = storeId?.trim() || ""
+      
+      if (!productId || !storeId) {
+        console.error("Invalid parameters in addProductToCart:", { productId, storeId })
+        toast({
+          title: "Invalid parameters",
+          description: "Product ID and Store ID are required.",
+          variant: "destructive",
+        })
+        return
+      }
+      
       console.log("addProductToCart called with:", { productId, storeId })
       const apiUrl = `/api/customer/product?productId=${encodeURIComponent(productId)}&storeId=${encodeURIComponent(storeId)}`
-      console.log("Fetching product from:", apiUrl)
+      console.log("Fetching product from API:", apiUrl)
+      console.log("Full API URL:", window.location.origin + apiUrl)
       
-      const response = await fetch(apiUrl)
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        cache: 'no-store', // Ensure we always fetch fresh data
+      })
+      
       console.log("API response status:", response.status)
       
       if (!response.ok) {
-        const data = await response.json().catch(() => ({}))
-        console.error("API error:", data)
+        let errorData = {}
+        try {
+          errorData = await response.json()
+        } catch (e) {
+          const text = await response.text()
+          console.error("Failed to parse error response:", text)
+          errorData = { error: `Server error: ${response.status} ${response.statusText}` }
+        }
+        
+        console.error("API error in addProductToCart:", errorData)
+        console.error("Product lookup failed:", {
+          productId,
+          storeId,
+          status: response.status,
+          error: errorData
+        })
+        
         toast({
           title: "Product not found",
-          description: data.error || `Product ${productId} is not available in store ${storeId}.`,
+          description: errorData.error || `Product "${productId}" is not available in store "${storeId}". Please check if the product exists in the inventory.`,
           variant: "destructive",
         })
         return
       }
       
       const data = await response.json()
-      console.log("Product data received:", data)
+      console.log("Product data received from API:", data)
+      
+      if (!data || !data.product) {
+        console.error("Invalid API response structure:", data)
+        toast({
+          title: "Invalid response",
+          description: "The server returned an invalid response. Please try again.",
+          variant: "destructive",
+        })
+        return
+      }
 
       const product = data.product
+      console.log("Product found in inventory:", {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        stock: product.stock,
+        custom_id: product.custom_id,
+        store_id: product.store_id
+      })
 
-      if (!product) {
-        console.error("Product not found in response")
+      if (!product.id || !product.name) {
+        console.error("Product data incomplete:", product)
         toast({
-          title: "Product not found",
-          description: "This product is not available in the store inventory.",
+          title: "Invalid product data",
+          description: "The product data is incomplete. Please try again.",
+          variant: "destructive",
+        })
+        return
+      }
+      
+      // Verify product has stock
+      if (product.stock <= 0) {
+        console.error("Product out of stock:", product)
+        toast({
+          title: "Product out of stock",
+          description: `"${product.name}" is currently out of stock.`,
+          variant: "destructive",
+        })
+        return
+      }
+      
+      // Verify store_id matches
+      if (product.store_id !== storeId) {
+        console.error("Store ID mismatch:", {
+          expected: storeId,
+          actual: product.store_id,
+          product
+        })
+        toast({
+          title: "Store mismatch",
+          description: `This product belongs to a different store. Expected: ${storeId}, Found: ${product.store_id}`,
           variant: "destructive",
         })
         return
@@ -796,6 +988,7 @@ export default function CustomerPage() {
 
   // Calculate totals - use empty values if not ready to prevent hydration mismatch
   // Use useMemo to prevent recalculation on every render
+  // IMPORTANT: Hooks must be called before any conditional returns
   const totals = useMemo(() => {
     // Only calculate if mounted and cart is loaded, otherwise return empty totals
     if (!isMounted || !isCartLoaded) {
@@ -815,7 +1008,7 @@ export default function CustomerPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900" suppressHydrationWarning>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
