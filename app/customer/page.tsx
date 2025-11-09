@@ -600,8 +600,6 @@ export default function CustomerPage() {
     }
   }
 
-  const totals = calculateTotal()
-
   // Prevent hydration mismatch by not rendering until mounted
   if (!isMounted) {
     return (
@@ -610,6 +608,9 @@ export default function CustomerPage() {
       </div>
     )
   }
+
+  // Calculate totals only after component is mounted to prevent hydration mismatch
+  const totals = calculateTotal()
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
