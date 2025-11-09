@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ShoppingCart, Trash2, Checkout, Radio, X, CheckCircle } from "lucide-react"
@@ -44,6 +44,9 @@ export default function CustomerPage() {
   const router = useRouter()
   const [hasProcessedUrlParams, setHasProcessedUrlParams] = useState(false)
   const [isCartLoaded, setIsCartLoaded] = useState(false)
+  
+  // Use ref to store the latest version of handleAddProductFromUrl to avoid dependency issues
+  const handleAddProductFromUrlRef = useRef<((productId: string, storeId: string) => Promise<void>) | null>(null)
 
   // Ensure component is mounted on client side
   useEffect(() => {
@@ -215,6 +218,11 @@ export default function CustomerPage() {
       window.history.replaceState({}, "", newUrl)
     }
   }, [toast])
+  
+  // Update ref whenever handleAddProductFromUrl changes
+  useEffect(() => {
+    handleAddProductFromUrlRef.current = handleAddProductFromUrl
+  }, [handleAddProductFromUrl])
 
   // Handle URL parameters to add product to cart
   useEffect(() => {
@@ -258,14 +266,19 @@ export default function CustomerPage() {
         // Wait a bit for everything to be ready, then process
         const timeoutId = setTimeout(() => {
           console.log("Calling handleAddProductFromUrl with:", { productId, storeId })
-          handleAddProductFromUrl(productId, storeId).catch((error: unknown) => {
-            console.error("Error adding product from URL:", error)
-            toast({
-              title: "Error",
-              description: "Could not add product to cart. Please try again.",
-              variant: "destructive",
+          const handler = handleAddProductFromUrlRef.current
+          if (handler) {
+            handler(productId, storeId).catch((error: unknown) => {
+              console.error("Error adding product from URL:", error)
+              toast({
+                title: "Error",
+                description: "Could not add product to cart. Please try again.",
+                variant: "destructive",
+              })
             })
-          })
+          } else {
+            console.error("handleAddProductFromUrlRef.current is null")
+          }
         }, 300)
         
         return () => {
@@ -277,7 +290,7 @@ export default function CustomerPage() {
     } catch (error) {
       console.error("Error reading URL parameters:", error)
     }
-  }, [hasProcessedUrlParams, handleAddProductFromUrl, isCartLoaded, isMounted, toast])
+  }, [hasProcessedUrlParams, isCartLoaded, isMounted, toast])
 
   const handleNfcRead = async () => {
     if (!isNfcSupported) {
