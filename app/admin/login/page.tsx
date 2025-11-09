@@ -12,8 +12,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2, Shield, Lock, Mail, Eye, EyeOff } from "lucide-react"
 
 export default function AdminLoginPage() {
-  const [email, setEmail] = useState("nfctapcart@gmail.com")
-  const [password, setPassword] = useState("nfc12345")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
