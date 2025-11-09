@@ -725,7 +725,7 @@ export default function CustomerPage() {
   }
 
   // Prevent hydration mismatch by not rendering until mounted
-  if (!isMounted) {
+  if (!isMounted || !isCartLoaded) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
         <div className="text-white text-lg">Loading...</div>
@@ -733,7 +733,7 @@ export default function CustomerPage() {
     )
   }
 
-  // Calculate totals only after component is mounted to prevent hydration mismatch
+  // Calculate totals only after component is mounted and cart is loaded to prevent hydration mismatch
   const totals = calculateTotal()
 
   return (
@@ -783,7 +783,7 @@ export default function CustomerPage() {
           </Card>
 
           {/* Cart Section */}
-          <Card className="bg-white/5 backdrop-blur-sm border-white/10">
+          <Card className="bg-white/5 backdrop-blur-sm border-white/10" suppressHydrationWarning>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
@@ -791,7 +791,7 @@ export default function CustomerPage() {
                     <ShoppingCart className="w-5 h-5" />
                     Your Cart
                   </CardTitle>
-                  <CardDescription className="text-slate-300">
+                  <CardDescription className="text-slate-300" suppressHydrationWarning>
                     {cart.length === 0
                       ? "Your cart is empty. Tap on NFC tags to add products."
                       : `${cart.length} item${cart.length > 1 ? "s" : ""} in your cart`}
@@ -808,7 +808,7 @@ export default function CustomerPage() {
                 )}
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent suppressHydrationWarning>
               {cart.length === 0 ? (
                 <div className="text-center py-12">
                   <ShoppingCart className="w-16 h-16 text-slate-500 mx-auto mb-4" />
