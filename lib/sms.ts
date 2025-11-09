@@ -3,6 +3,18 @@
  * Handles sending SMS messages via Twilio
  */
 
+// Lazy load Twilio to avoid module resolution issues
+function getTwilioClient() {
+  try {
+    // Use require for Next.js API routes (server-side only)
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    return require("twilio")
+  } catch (error: any) {
+    console.error("[SMS] Failed to load Twilio module:", error.message)
+    throw new Error(`Failed to load Twilio: ${error.message}. Make sure 'twilio' is installed: npm install twilio`)
+  }
+}
+
 interface SMSOptions {
   to: string
   body: string
@@ -71,9 +83,8 @@ export async function sendSMS(options: SMSOptions): Promise<void> {
   }
   
   try {
-    // Import Twilio - Next.js API routes support require()
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const twilio = require("twilio")
+    // Get Twilio client (lazy load)
+    const twilio = getTwilioClient()
     const client = twilio(accountSid, authToken)
     
     console.log(`[SMS] Sending message via Twilio...`)
