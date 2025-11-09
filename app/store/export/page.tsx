@@ -325,7 +325,11 @@ export default function StoreExportPage() {
             <CardContent>
               <div className="space-y-3">
                 {filteredItems.map((item) => (
-                  <div key={item.id} className="flex items-center gap-4 p-4 border border-slate-200 rounded-lg hover:bg-slate-50">
+                  <label
+                    key={item.id}
+                    htmlFor={`item-${item.id}`}
+                    className="flex items-center gap-4 p-4 border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer"
+                  >
                     <Checkbox
                       id={`item-${item.id}`}
                       checked={selectedItems.has(item.id)}
@@ -350,7 +354,7 @@ export default function StoreExportPage() {
                         </code>
                       </div>
                     </div>
-                  </div>
+                  </label>
                 ))}
                 
                 {filteredItems.length === 0 && (
