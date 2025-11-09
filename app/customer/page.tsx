@@ -815,7 +815,7 @@ export default function CustomerPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900" suppressHydrationWarning>
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
@@ -893,16 +893,17 @@ export default function CustomerPage() {
                   <p className="text-slate-400 text-lg">No items in cart</p>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-4" suppressHydrationWarning>
                   {cart.map((item) => (
                     <div
                       key={item.id}
                       className="flex items-center justify-between p-4 bg-white/5 rounded-lg border border-white/10"
+                      suppressHydrationWarning
                     >
                       <div className="flex-1">
-                        <h3 className="text-white font-semibold">{item.product_name}</h3>
-                        <p className="text-slate-400 text-sm">Store ID: {item.store_id}</p>
-                        <p className="text-cyan-400 font-bold mt-1">₹{item.price.toFixed(2)}</p>
+                        <h3 className="text-white font-semibold" suppressHydrationWarning>{item.product_name}</h3>
+                        <p className="text-slate-400 text-sm" suppressHydrationWarning>Store ID: {item.store_id}</p>
+                        <p className="text-cyan-400 font-bold mt-1" suppressHydrationWarning>₹{item.price.toFixed(2)}</p>
                       </div>
                       <Button
                         variant="ghost"
@@ -914,20 +915,20 @@ export default function CustomerPage() {
                       </Button>
                     </div>
                   ))}
-                  <div className="border-t border-white/10 pt-4 mt-4">
-                    <div className="flex justify-between text-slate-300 mb-2">
+                  <div className="border-t border-white/10 pt-4 mt-4" suppressHydrationWarning>
+                    <div className="flex justify-between text-slate-300 mb-2" suppressHydrationWarning>
                       <span>Subtotal:</span>
-                      <span>₹{totals.subtotal.toFixed(2)}</span>
+                      <span suppressHydrationWarning>₹{totals.subtotal.toFixed(2)}</span>
                     </div>
                     {discount > 0 && (
-                      <div className="flex justify-between text-green-400 mb-2">
+                      <div className="flex justify-between text-green-400 mb-2" suppressHydrationWarning>
                         <span>Discount:</span>
-                        <span>-₹{discount.toFixed(2)}</span>
+                        <span suppressHydrationWarning>-₹{discount.toFixed(2)}</span>
                       </div>
                     )}
-                    <div className="flex justify-between text-white font-bold text-lg pt-2 border-t border-white/10">
+                    <div className="flex justify-between text-white font-bold text-lg pt-2 border-t border-white/10" suppressHydrationWarning>
                       <span>Total:</span>
-                      <span>₹{totals.total.toFixed(2)}</span>
+                      <span suppressHydrationWarning>₹{totals.total.toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
