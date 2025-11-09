@@ -45,13 +45,30 @@ export default function CustomerPage() {
   const [hasProcessedUrlParams, setHasProcessedUrlParams] = useState(false)
   const [isCartLoaded, setIsCartLoaded] = useState(false)
   
-  // Use ref to store the latest version of handleAddProductFromUrl to avoid dependency issues
+  // Use refs to store the latest versions to avoid dependency issues
   const handleAddProductFromUrlRef = useRef<((productId: string, storeId: string) => Promise<void>) | null>(null)
+  const toastRef = useRef(toast)
+  
+  // Update toast ref whenever it changes
+  useEffect(() => {
+    toastRef.current = toast
+  }, [toast])
+  
+  // Initialize ref immediately with a placeholder function
+  const initializeRef = useCallback(() => {
+    if (handleAddProductFromUrlRef.current === null) {
+      // Set a placeholder that will be replaced
+      handleAddProductFromUrlRef.current = async () => {
+        console.log("Ref not initialized yet")
+      }
+    }
+  }, [])
 
   // Ensure component is mounted on client side
   useEffect(() => {
     setIsMounted(true)
-  }, [])
+    initializeRef()
+  }, [initializeRef])
 
   useEffect(() => {
     // Only run on client side
@@ -221,6 +238,7 @@ export default function CustomerPage() {
   
   // Update ref whenever handleAddProductFromUrl changes
   useEffect(() => {
+    console.log("Updating handleAddProductFromUrlRef")
     handleAddProductFromUrlRef.current = handleAddProductFromUrl
   }, [handleAddProductFromUrl])
 
@@ -263,34 +281,55 @@ export default function CustomerPage() {
         console.log("Processing URL parameters:", { storeId, productId })
         setHasProcessedUrlParams(true)
         
-        // Wait a bit for everything to be ready, then process
-        const timeoutId = setTimeout(() => {
-          console.log("Calling handleAddProductFromUrl with:", { productId, storeId })
-          const handler = handleAddProductFromUrlRef.current
-          if (handler) {
-            handler(productId, storeId).catch((error: unknown) => {
-              console.error("Error adding product from URL:", error)
-              toast({
-                title: "Error",
-                description: "Could not add product to cart. Please try again.",
-                variant: "destructive",
+        // Call the function directly after a small delay to ensure ref is set
+        // Use requestAnimationFrame to ensure DOM is ready
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            console.log("Calling handleAddProductFromUrl with:", { productId, storeId })
+            const handler = handleAddProductFromUrlRef.current
+            if (handler) {
+              handler(productId, storeId).catch((error: unknown) => {
+                console.error("Error adding product from URL:", error)
+                toastRef.current({
+                  title: "Error",
+                  description: "Could not add product to cart. Please try again.",
+                  variant: "destructive",
+                })
               })
-            })
-          } else {
-            console.error("handleAddProductFromUrlRef.current is null")
-          }
-        }, 300)
-        
-        return () => {
-          clearTimeout(timeoutId)
-        }
+            } else {
+              console.error("handleAddProductFromUrlRef.current is null, retrying...")
+              // Retry once after a short delay
+              setTimeout(() => {
+                const retryHandler = handleAddProductFromUrlRef.current
+                if (retryHandler) {
+                  console.log("Retrying handleAddProductFromUrl with:", { productId, storeId })
+                  retryHandler(productId, storeId).catch((error: unknown) => {
+                    console.error("Error adding product from URL (retry):", error)
+                    toastRef.current({
+                      title: "Error",
+                      description: "Could not add product to cart. Please try again.",
+                      variant: "destructive",
+                    })
+                  })
+                } else {
+                  console.error("handleAddProductFromUrlRef.current is still null after retry")
+                  toastRef.current({
+                    title: "Error",
+                    description: "Could not add product to cart. Please refresh the page and try again.",
+                    variant: "destructive",
+                  })
+                }
+              }, 200)
+            }
+          }, 100)
+        })
       } else {
         console.log("No storeId or productId in URL")
       }
     } catch (error) {
       console.error("Error reading URL parameters:", error)
     }
-  }, [hasProcessedUrlParams, isCartLoaded, isMounted, toast])
+  }, [hasProcessedUrlParams, isCartLoaded, isMounted])
 
   const handleNfcRead = async () => {
     if (!isNfcSupported) {
