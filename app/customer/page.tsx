@@ -312,19 +312,41 @@ export default function CustomerPage() {
         try {
           const record = event.message.records[0]
           const url = new TextDecoder().decode(record.data)
+          console.log("NFC URL decoded:", url)
           
-          // Parse URL format: productID/storeID/website.com
-          const urlParts = url.split("/")
-          if (urlParts.length >= 3) {
-            const productId = urlParts[0]
-            const storeId = urlParts[1]
-            
+          let productId: string | null = null
+          let storeId: string | null = null
+          
+          // Try to parse as full URL first (e.g., https://tapcart-fr.onrender.com/customer?storeId=X&productId=Y)
+          try {
+            const urlObj = new URL(url)
+            const params = new URLSearchParams(urlObj.search)
+            productId = params.get("productId")
+            storeId = params.get("storeId")
+            console.log("Parsed from full URL:", { productId, storeId })
+          } catch (e) {
+            // If not a full URL, try parsing as productID/storeID/website.com format
+            const urlParts = url.split("/")
+            if (urlParts.length >= 3) {
+              productId = urlParts[0]
+              storeId = urlParts[1]
+              console.log("Parsed from path format:", { productId, storeId })
+            } else if (urlParts.length === 2) {
+              // Try productID/storeID format
+              productId = urlParts[0]
+              storeId = urlParts[1]
+              console.log("Parsed from simple format:", { productId, storeId })
+            }
+          }
+          
+          if (productId && storeId) {
             // Add product to cart
             await addProductToCart(productId, storeId)
           } else {
+            console.error("Could not parse productId and storeId from NFC URL:", url)
             toast({
               title: "Invalid NFC tag",
-              description: "The NFC tag format is invalid.",
+              description: "The NFC tag format is invalid. Expected URL with productId and storeId parameters.",
               variant: "destructive",
             })
           }
@@ -360,17 +382,26 @@ export default function CustomerPage() {
 
   const addProductToCart = async (productId: string, storeId: string) => {
     try {
-      const response = await fetch(`/api/customer/product?productId=${productId}&storeId=${storeId}`)
-      const data = await response.json()
-
+      console.log("addProductToCart called with:", { productId, storeId })
+      const apiUrl = `/api/customer/product?productId=${encodeURIComponent(productId)}&storeId=${encodeURIComponent(storeId)}`
+      console.log("Fetching product from:", apiUrl)
+      
+      const response = await fetch(apiUrl)
+      console.log("API response status:", response.status)
+      
       if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        console.error("API error:", data)
         toast({
           title: "Product not found",
-          description: data.error || "This product is not available in the store inventory.",
+          description: data.error || `Product ${productId} is not available in store ${storeId}.`,
           variant: "destructive",
         })
         return
       }
+      
+      const data = await response.json()
+      console.log("Product data received:", data)
 
       const product = data.product
 
