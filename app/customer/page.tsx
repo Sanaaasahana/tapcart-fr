@@ -3,7 +3,7 @@
 // Force dynamic rendering to prevent hydration issues
 export const dynamic = 'force-dynamic'
 
-import React, { useState, useEffect, useCallback, useRef, useMemo } from "react"
+import React, { useState, useEffect, useCallback, useRef, useMemo, startTransition } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ShoppingCart, Trash2, Checkout, Radio, X, CheckCircle } from "lucide-react"
@@ -88,7 +88,9 @@ export default function CustomerPage() {
       if (savedCart) {
         const parsedCart = JSON.parse(savedCart)
         if (Array.isArray(parsedCart)) {
-          setCart(parsedCart)
+          startTransition(() => {
+            setCart(parsedCart)
+          })
         }
       }
     } catch (error) {
@@ -147,7 +149,7 @@ export default function CustomerPage() {
       console.log("API response headers:", Object.fromEntries(response.headers.entries()))
       
       if (!response.ok) {
-        let errorData = {}
+        let errorData: { error?: string } = {}
         try {
           errorData = await response.json()
         } catch (e) {
@@ -298,7 +300,10 @@ export default function CustomerPage() {
       console.log("Updated cart:", updatedCart)
       
       // Update both state and localStorage
-      setCart(updatedCart)
+      // Use startTransition to prevent hydration mismatches
+      startTransition(() => {
+        setCart(updatedCart)
+      })
       try {
         localStorage.setItem("customer_cart", JSON.stringify(updatedCart))
         console.log("Cart saved to localStorage")
@@ -594,7 +599,7 @@ export default function CustomerPage() {
       console.log("API response status:", response.status)
       
       if (!response.ok) {
-        let errorData = {}
+        let errorData: { error?: string } = {}
         try {
           errorData = await response.json()
         } catch (e) {
@@ -728,7 +733,10 @@ export default function CustomerPage() {
       console.log("Updated cart:", updatedCart)
       
       // Update both state and localStorage
-      setCart(updatedCart)
+      // Use startTransition to prevent hydration mismatches
+      startTransition(() => {
+        setCart(updatedCart)
+      })
       try {
         localStorage.setItem("customer_cart", JSON.stringify(updatedCart))
         console.log("Cart saved to localStorage")
@@ -751,7 +759,9 @@ export default function CustomerPage() {
   }
 
   const removeFromCart = (itemId: number) => {
-    setCart(cart.filter((item) => item.id !== itemId))
+    startTransition(() => {
+      setCart(cart.filter((item) => item.id !== itemId))
+    })
     toast({
       title: "Removed",
       description: "Product removed from cart.",
@@ -951,7 +961,9 @@ export default function CustomerPage() {
         })
         
         // Clear cart and reset form
-        setCart([])
+        startTransition(() => {
+          setCart([])
+        })
         localStorage.removeItem("customer_cart")
         setPhone("")
         setOtp("")
