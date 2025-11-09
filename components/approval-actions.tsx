@@ -71,7 +71,7 @@ export function ApprovalActions({ storeId, email, onStatusChange }: ApprovalActi
 
         if (action === "approve") {
           const subject = "Your Store Account Has Been Approved"
-          const body = `Hello ${storeId},\n\nYour store registration has been approved. You can login now at https://nfc-trial.onrender.com.\n\nStore ID: ${storeId}\nEmail: ${email}\n\nRegards,\nAdmin, TapCart`
+          const body = `Hello ${storeId},\n\nYour store registration has been approved. You can visit https://tapcart-fr.onrender.com/ and login at the store login page.\n\nStore ID: ${storeId}\nEmail: ${email}\n\nRegards,\nAdmin, TapCart`
           openGmailCompose(email, subject, body)
         } else {
           const subject = "Update on Your Store Registration"
