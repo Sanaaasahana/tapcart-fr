@@ -51,14 +51,22 @@ export async function POST(request: NextRequest) {
     // Send OTP via SMS
     try {
       await sendOTPSMS(phone, otpCode)
-      console.log(`OTP sent to ${phone}`)
-    } catch (error) {
+      console.log(`OTP sent successfully to ${phone}`)
+      return NextResponse.json({ success: true, message: "OTP sent successfully" })
+    } catch (error: any) {
       console.error("Error sending OTP SMS:", error)
-      // Don't fail the request if SMS fails - OTP is still saved in DB
-      // User can still verify if they know the OTP (for testing)
+      // Return error details to help with debugging
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: "Failed to send OTP via SMS",
+          details: error.message || "Unknown error",
+          // Include OTP in response for development/testing (remove in production)
+          otp: process.env.NODE_ENV === "development" ? otpCode : undefined
+        },
+        { status: 500 }
+      )
     }
-
-    return NextResponse.json({ success: true, message: "OTP sent successfully" })
   } catch (error) {
     console.error("OTP send error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
