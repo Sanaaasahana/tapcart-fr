@@ -21,9 +21,6 @@ interface CartItem {
   quantity: number
 }
 
-// Force dynamic rendering
-export const dynamic = 'force-dynamic'
-
 export default function CustomerPage() {
   const [cart, setCart] = useState<CartItem[]>([])
   const [isNfcSupported, setIsNfcSupported] = useState(false)
@@ -124,14 +121,9 @@ export default function CustomerPage() {
       // Only run on client side
       if (typeof window === "undefined") return
 
-      console.log("handleAddProductFromUrl called with:", { productId, storeId })
-
       try {
         const apiUrl = `/api/customer/product?productId=${encodeURIComponent(productId)}&storeId=${encodeURIComponent(storeId)}`
-        console.log("Fetching product from:", apiUrl)
-
         const response = await fetch(apiUrl)
-        console.log("API response status:", response.status)
 
         if (!response.ok) {
           const data = await response.json().catch(() => ({}))
@@ -148,11 +140,9 @@ export default function CustomerPage() {
         }
 
         const data = await response.json()
-        console.log("Product data received:", data)
         const product = data.product
 
         if (!product) {
-          console.error("Product not found in response")
           toast({
             title: "Product not found",
             description: "This product is not available in the store inventory.",
@@ -214,15 +204,12 @@ export default function CustomerPage() {
           quantity: 1,
         }
 
-        console.log("Adding item to cart:", newItem)
         const updatedCart = [...currentCart, newItem]
-        console.log("Updated cart:", updatedCart)
 
         // Update both state and localStorage
         setCart(updatedCart)
         try {
           localStorage.setItem("customer_cart", JSON.stringify(updatedCart))
-          console.log("Cart saved to localStorage")
         } catch (error) {
           console.error("Error saving cart to localStorage:", error)
         }
@@ -235,7 +222,6 @@ export default function CustomerPage() {
         // Clean up URL parameters after adding to cart
         const newUrl = window.location.pathname
         window.history.replaceState({}, "", newUrl)
-        console.log("URL parameters cleaned up")
       } catch (error) {
         console.error("Error adding product from URL:", error)
         toast({
@@ -252,31 +238,32 @@ export default function CustomerPage() {
   )
 
   useEffect(() => {
-    console.log("URL params useEffect running:", {
-      isMounted,
-      hasProcessedUrlParams,
-      isCartLoaded,
-    })
-
+    // Only process URL params once after component is fully mounted
     if (typeof window === "undefined" || !isMounted || hasProcessedUrlParams || !isCartLoaded) {
       return
     }
 
-    const urlParams = new URLSearchParams(window.location.search)
-    const storeId = urlParams.get("storeId")
-    const productId = urlParams.get("productId")
+    try {
+      const urlParams = new URLSearchParams(window.location.search)
+      const storeId = urlParams.get("storeId")
+      const productId = urlParams.get("productId")
 
-    console.log("URL params found:", { storeId, productId })
-
-    if (storeId && productId) {
-      console.log("Processing URL parameters:", { storeId, productId })
-      setHasProcessedUrlParams(true)
-      // Call handleAddProductFromUrl directly - it's in scope and available
-      handleAddProductFromUrl(productId, storeId).catch((error: unknown) => {
-        console.error("Error adding product from URL:", error)
-      })
+      if (storeId && productId) {
+        setHasProcessedUrlParams(true)
+        handleAddProductFromUrl(productId, storeId).catch((error: unknown) => {
+          console.error("Error adding product from URL:", error)
+          setHasProcessedUrlParams(true) // Set to true even on error to prevent retries
+        })
+      } else {
+        // No URL params to process, mark as processed
+        setHasProcessedUrlParams(true)
+      }
+    } catch (error) {
+      console.error("Error processing URL params:", error)
+      setHasProcessedUrlParams(true) // Set to true on error to prevent retries
     }
-  }, [hasProcessedUrlParams, isCartLoaded, isMounted, handleAddProductFromUrl])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMounted, isCartLoaded]) // Removed handleAddProductFromUrl and hasProcessedUrlParams from deps to prevent loops
 
   const handleNfcRead = async () => {
     if (!isNfcSupported) {
@@ -297,7 +284,6 @@ export default function CustomerPage() {
         try {
           const record = event.message.records[0]
           const url = new TextDecoder().decode(record.data)
-          console.log("NFC URL decoded:", url)
 
           let productId: string | null = null
           let storeId: string | null = null
@@ -308,19 +294,16 @@ export default function CustomerPage() {
             const params = new URLSearchParams(urlObj.search)
             productId = params.get("productId")
             storeId = params.get("storeId")
-            console.log("Parsed from full URL:", { productId, storeId })
           } catch (e) {
             // If not a full URL, try parsing as productID/storeID/website.com format
             const urlParts = url.split("/")
             if (urlParts.length >= 3) {
               productId = urlParts[0]
               storeId = urlParts[1]
-              console.log("Parsed from path format:", { productId, storeId })
             } else if (urlParts.length === 2) {
               // Try productID/storeID format
               productId = urlParts[0]
               storeId = urlParts[1]
-              console.log("Parsed from simple format:", { productId, storeId })
             }
           }
 
@@ -328,7 +311,6 @@ export default function CustomerPage() {
             // Add product to cart
             await addProductToCart(productId, storeId)
           } else {
-            console.error("Could not parse productId and storeId from NFC URL:", url)
             toast({
               title: "Invalid NFC tag",
               description: "The NFC tag format is invalid. Expected URL with productId and storeId parameters.",
@@ -367,12 +349,8 @@ export default function CustomerPage() {
 
   const addProductToCart = async (productId: string, storeId: string) => {
     try {
-      console.log("addProductToCart called with:", { productId, storeId })
       const apiUrl = `/api/customer/product?productId=${encodeURIComponent(productId)}&storeId=${encodeURIComponent(storeId)}`
-      console.log("Fetching product from:", apiUrl)
-
       const response = await fetch(apiUrl)
-      console.log("API response status:", response.status)
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}))
@@ -386,8 +364,6 @@ export default function CustomerPage() {
       }
 
       const data = await response.json()
-      console.log("Product data received:", data)
-
       const product = data.product
 
       // Check if product already in cart
