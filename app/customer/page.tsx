@@ -237,12 +237,12 @@ export default function CustomerPage() {
   }, [toast])
   
   // Update ref immediately whenever handleAddProductFromUrl changes
-  // This ensures the ref is always up to date
+  // This ensures the ref is always up to date and available immediately
   handleAddProductFromUrlRef.current = handleAddProductFromUrl
   
-  // Also update in useEffect as a backup
+  // Also update in useEffect as a backup (runs after render)
   useEffect(() => {
-    console.log("Updating handleAddProductFromUrlRef")
+    console.log("Updating handleAddProductFromUrlRef in useEffect")
     handleAddProductFromUrlRef.current = handleAddProductFromUrl
   }, [handleAddProductFromUrl])
 
@@ -287,23 +287,15 @@ export default function CustomerPage() {
         // Set flag first to prevent re-processing
         setHasProcessedUrlParams(true)
         
-        // Store productId and storeId in variables that won't change
-        const productIdToAdd = productId
-        const storeIdToAdd = storeId
-        
-        // Call the function directly - use a small delay to ensure everything is ready
-        // Store the timeout ID for cleanup
-        console.log("Setting timeout to call handleAddProductFromUrl in 200ms...")
-        const timeoutId = setTimeout(() => {
-          console.log("Timeout executed! Calling handleAddProductFromUrl with:", { productId: productIdToAdd, storeId: storeIdToAdd })
+        // Call the function to add product to cart
+        // Use a small delay to ensure everything is initialized
+        const addProduct = () => {
+          console.log("Calling handleAddProductFromUrl with:", { productId, storeId })
           
-          // Try to get the handler from ref first
           const handler = handleAddProductFromUrlRef.current
-          console.log("Handler from ref:", handler ? "found" : "not found")
-          
           if (handler) {
-            console.log("Handler found in ref, calling...")
-            handler(productIdToAdd, storeIdToAdd).catch((error: unknown) => {
+            console.log("Handler found, calling...")
+            handler(productId, storeId).catch((error: unknown) => {
               console.error("Error adding product from URL:", error)
               try {
                 toastRef.current({
@@ -316,46 +308,39 @@ export default function CustomerPage() {
               }
             })
           } else {
-            // If ref is not set yet, wait a bit more and retry
-            console.log("Ref not set yet, retrying in 100ms...")
-            setTimeout(() => {
-              const retryHandler = handleAddProductFromUrlRef.current
-              console.log("Retry: Handler from ref:", retryHandler ? "found" : "not found")
-              if (retryHandler) {
-                console.log("Retry: Handler found, calling...")
-                retryHandler(productIdToAdd, storeIdToAdd).catch((error: unknown) => {
-                  console.error("Error adding product from URL (retry):", error)
-                  try {
-                    toastRef.current({
-                      title: "Error",
-                      description: "Could not add product to cart. Please try again.",
-                      variant: "destructive",
-                    })
-                  } catch (e) {
-                    console.error("Error showing toast:", e)
-                  }
+            console.warn("Handler not found in ref, calling handleAddProductFromUrl directly...")
+            // Fallback: call handleAddProductFromUrl directly
+            handleAddProductFromUrl(productId, storeId).catch((error: unknown) => {
+              console.error("Error adding product from URL (direct call):", error)
+              try {
+                toastRef.current({
+                  title: "Error",
+                  description: "Could not add product to cart. Please try again.",
+                  variant: "destructive",
                 })
-              } else {
-                console.error("Ref still not set after retry, showing error")
-                try {
-                  toastRef.current({
-                    title: "Error",
-                    description: "Could not add product to cart. Please refresh the page and try again.",
-                    variant: "destructive",
-                  })
-                } catch (e) {
-                  console.error("Error showing toast:", e)
-                }
+              } catch (e) {
+                console.error("Error showing toast:", e)
               }
-            }, 100)
+            })
           }
-        }, 200)
+        }
         
-        console.log("Timeout ID set:", timeoutId)
-        
-        // Cleanup function to clear timeout if component unmounts
-        return () => {
-          clearTimeout(timeoutId)
+        // Try immediately first
+        if (handleAddProductFromUrlRef.current) {
+          console.log("Ref is ready, calling immediately")
+          addProduct()
+        } else {
+          // If ref not ready, wait a bit
+          console.log("Ref not ready, waiting 100ms...")
+          const timeoutId = setTimeout(() => {
+            console.log("Timeout executed, calling addProduct")
+            addProduct()
+          }, 100)
+          
+          // Cleanup
+          return () => {
+            clearTimeout(timeoutId)
+          }
         }
       } else {
         console.log("No storeId or productId in URL")
@@ -397,6 +382,16 @@ export default function CustomerPage() {
             productId = params.get("productId")
             storeId = params.get("storeId")
             console.log("Parsed from full URL:", { productId, storeId })
+            
+            // If it's a full URL with customer path, navigate to it so URL params are processed automatically
+            // This way, when the page loads, it will automatically add the product to cart
+            if (urlObj.pathname.includes('/customer') && productId && storeId) {
+              console.log("Full customer URL detected, navigating to:", url)
+              // Navigate to the URL - the page will load and process URL params automatically
+              window.location.href = url
+              setIsNfcReading(false)
+              return
+            }
           } catch (e) {
             // If not a full URL, try parsing as productID/storeID/website.com format
             const urlParts = url.split("/")
@@ -413,7 +408,8 @@ export default function CustomerPage() {
           }
           
           if (productId && storeId) {
-            // Add product to cart
+            console.log("Adding product to cart from NFC:", { productId, storeId })
+            // Add product to cart directly
             await addProductToCart(productId, storeId)
           } else {
             console.error("Could not parse productId and storeId from NFC URL:", url)
@@ -425,9 +421,11 @@ export default function CustomerPage() {
           }
         } catch (error) {
           console.error("Error reading NFC:", error)
+          const errorMessage = error instanceof Error ? error.message : "Unknown error"
+          console.error("NFC error details:", errorMessage)
           toast({
             title: "Error reading NFC",
-            description: "Could not read the NFC tag. Please try again.",
+            description: `Could not read the NFC tag: ${errorMessage}. Please try again.`,
             variant: "destructive",
           })
         } finally {
