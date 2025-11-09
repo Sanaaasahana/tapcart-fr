@@ -1,21 +1,12 @@
 "use client"
 
-// Force dynamic rendering to prevent hydration issues
-export const dynamic = 'force-dynamic'
-
-import React, { useState, useEffect, useCallback, useRef, useMemo, startTransition } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ShoppingCart, Trash2, Checkout, Radio, X, CheckCircle } from "lucide-react"
+import { ShoppingCart, Trash2, Check as Checkout, Radio, CheckCircle } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
@@ -47,35 +38,15 @@ export default function CustomerPage() {
   const router = useRouter()
   const [hasProcessedUrlParams, setHasProcessedUrlParams] = useState(false)
   const [isCartLoaded, setIsCartLoaded] = useState(false)
-  
-  // Use refs to store the latest versions to avoid dependency issues
-  const handleAddProductFromUrlRef = useRef<((productId: string, storeId: string) => Promise<void>) | null>(null)
-  const toastRef = useRef(toast)
-  
-  // Update toast ref whenever it changes
-  useEffect(() => {
-    toastRef.current = toast
-  }, [toast])
-  
-  // Initialize ref immediately with a placeholder function
-  const initializeRef = useCallback(() => {
-    if (handleAddProductFromUrlRef.current === null) {
-      // Set a placeholder that will be replaced
-      handleAddProductFromUrlRef.current = async () => {
-        console.log("Ref not initialized yet")
-      }
-    }
-  }, [])
 
   // Ensure component is mounted on client side
   useEffect(() => {
     setIsMounted(true)
-    initializeRef()
-  }, [initializeRef])
+  }, [])
 
   useEffect(() => {
     // Only run on client side
-    if (typeof window === 'undefined') return
+    if (typeof window === "undefined") return
 
     // Check NFC support
     if ("NDEFReader" in window) {
@@ -88,9 +59,7 @@ export default function CustomerPage() {
       if (savedCart) {
         const parsedCart = JSON.parse(savedCart)
         if (Array.isArray(parsedCart)) {
-          startTransition(() => {
-            setCart(parsedCart)
-          })
+          setCart(parsedCart)
         }
       }
     } catch (error) {
@@ -102,8 +71,8 @@ export default function CustomerPage() {
 
   useEffect(() => {
     // Only run on client side
-    if (typeof window === 'undefined') return
-    
+    if (typeof window === "undefined") return
+
     // Save cart to localStorage
     try {
       localStorage.setItem("customer_cart", JSON.stringify(cart))
@@ -112,359 +81,164 @@ export default function CustomerPage() {
     }
   }, [cart])
 
-  const handleAddProductFromUrl = useCallback(async (productId: string, storeId: string) => {
-    // Only run on client side
-    if (typeof window === 'undefined') return
+  const handleAddProductFromUrl = useCallback(
+    async (productId: string, storeId: string) => {
+      // Only run on client side
+      if (typeof window === "undefined") return
 
-    // Clean and validate parameters
-    productId = productId?.trim() || ""
-    storeId = storeId?.trim() || ""
-    
-    if (!productId || !storeId) {
-      console.error("Invalid parameters:", { productId, storeId })
-      toast({
-        title: "Invalid parameters",
-        description: "Product ID and Store ID are required.",
-        variant: "destructive",
-      })
-      return
-    }
+      console.log("handleAddProductFromUrl called with:", { productId, storeId })
 
-    console.log("handleAddProductFromUrl called with:", { productId, storeId })
+      try {
+        const apiUrl = `/api/customer/product?productId=${encodeURIComponent(productId)}&storeId=${encodeURIComponent(storeId)}`
+        console.log("Fetching product from:", apiUrl)
 
-    try {
-      const apiUrl = `/api/customer/product?productId=${encodeURIComponent(productId)}&storeId=${encodeURIComponent(storeId)}`
-      console.log("Fetching product from API:", apiUrl)
-      console.log("Full URL would be:", window.location.origin + apiUrl)
-      
-      const response = await fetch(apiUrl, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        cache: 'no-store', // Ensure we always fetch fresh data
-      })
-      
-      console.log("API response status:", response.status)
-      console.log("API response headers:", Object.fromEntries(response.headers.entries()))
-      
-      if (!response.ok) {
-        let errorData: { error?: string } = {}
-        try {
-          errorData = await response.json()
-        } catch (e) {
-          const text = await response.text()
-          console.error("Failed to parse error response:", text)
-          errorData = { error: `Server error: ${response.status} ${response.statusText}` }
+        const response = await fetch(apiUrl)
+        console.log("API response status:", response.status)
+
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}))
+          console.error("API error:", data)
+          toast({
+            title: "Product not found",
+            description: data.error || `Product ${productId} is not available in store ${storeId}.`,
+            variant: "destructive",
+          })
+          // Clean up URL parameters even on error
+          const newUrl = window.location.pathname
+          window.history.replaceState({}, "", newUrl)
+          return
         }
-        
-        console.error("API error response:", errorData)
-        console.error("Product lookup failed:", {
-          productId,
-          storeId,
-          status: response.status,
-          error: errorData
-        })
-        
+
+        const data = await response.json()
+        console.log("Product data received:", data)
+        const product = data.product
+
+        if (!product) {
+          console.error("Product not found in response")
+          toast({
+            title: "Product not found",
+            description: "This product is not available in the store inventory.",
+            variant: "destructive",
+          })
+          const newUrl = window.location.pathname
+          window.history.replaceState({}, "", newUrl)
+          return
+        }
+
+        // Get current cart from localStorage (more reliable than state during async operations)
+        let currentCart: CartItem[] = []
+        try {
+          const savedCart = localStorage.getItem("customer_cart")
+          if (savedCart) {
+            currentCart = JSON.parse(savedCart)
+            if (!Array.isArray(currentCart)) {
+              currentCart = []
+            }
+          }
+        } catch (error) {
+          console.error("Error reading cart from localStorage:", error)
+          currentCart = []
+        }
+
+        // Check if product already in cart
+        const existingItem = currentCart.find((item: CartItem) => item.product_id === product.id)
+        if (existingItem) {
+          toast({
+            title: "Product already in cart",
+            description: "This product is already in your cart. You can only add it once.",
+          })
+          // Clean up URL parameters
+          const newUrl = window.location.pathname
+          window.history.replaceState({}, "", newUrl)
+          return
+        }
+
+        // Check if cart has items from different store
+        if (currentCart.length > 0 && currentCart[0].store_id !== storeId) {
+          toast({
+            title: "Different store",
+            description: "You can only add products from the same store. Please clear your cart first.",
+            variant: "destructive",
+          })
+          // Clean up URL parameters
+          const newUrl = window.location.pathname
+          window.history.replaceState({}, "", newUrl)
+          return
+        }
+
+        // Add to cart
+        const newItem: CartItem = {
+          id: Date.now(),
+          product_id: product.id,
+          product_name: product.name,
+          store_id: storeId,
+          price: Number.parseFloat(product.price),
+          quantity: 1,
+        }
+
+        console.log("Adding item to cart:", newItem)
+        const updatedCart = [...currentCart, newItem]
+        console.log("Updated cart:", updatedCart)
+
+        // Update both state and localStorage
+        setCart(updatedCart)
+        try {
+          localStorage.setItem("customer_cart", JSON.stringify(updatedCart))
+          console.log("Cart saved to localStorage")
+        } catch (error) {
+          console.error("Error saving cart to localStorage:", error)
+        }
+
         toast({
-          title: "Product not found",
-          description: errorData.error || `Product "${productId}" is not available in store "${storeId}". Please check if the product exists in the inventory.`,
+          title: "Product added",
+          description: `${product.name} has been added to your cart.`,
+        })
+
+        // Clean up URL parameters after adding to cart
+        const newUrl = window.location.pathname
+        window.history.replaceState({}, "", newUrl)
+        console.log("URL parameters cleaned up")
+      } catch (error) {
+        console.error("Error adding product from URL:", error)
+        toast({
+          title: "Error",
+          description: "Could not add product to cart. Please try again.",
           variant: "destructive",
         })
         // Clean up URL parameters even on error
         const newUrl = window.location.pathname
         window.history.replaceState({}, "", newUrl)
-        return
       }
+    },
+    [toast],
+  )
 
-      const data = await response.json()
-      console.log("Product data received from API:", data)
-      
-      if (!data || !data.product) {
-        console.error("Invalid API response structure:", data)
-        toast({
-          title: "Invalid response",
-          description: "The server returned an invalid response. Please try again.",
-          variant: "destructive",
-        })
-        const newUrl = window.location.pathname
-        window.history.replaceState({}, "", newUrl)
-        return
-      }
-      
-      const product = data.product
-      console.log("Product found in inventory:", {
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        stock: product.stock,
-        custom_id: product.custom_id,
-        store_id: product.store_id
-      })
-
-      if (!product.id || !product.name) {
-        console.error("Product data incomplete:", product)
-        toast({
-          title: "Invalid product data",
-          description: "The product data is incomplete. Please try again.",
-          variant: "destructive",
-        })
-        const newUrl = window.location.pathname
-        window.history.replaceState({}, "", newUrl)
-        return
-      }
-      
-      // Verify product has stock
-      if (product.stock <= 0) {
-        console.error("Product out of stock:", product)
-        toast({
-          title: "Product out of stock",
-          description: `"${product.name}" is currently out of stock.`,
-          variant: "destructive",
-        })
-        const newUrl = window.location.pathname
-        window.history.replaceState({}, "", newUrl)
-        return
-      }
-      
-      // Verify store_id matches
-      if (product.store_id !== storeId) {
-        console.error("Store ID mismatch:", {
-          expected: storeId,
-          actual: product.store_id,
-          product
-        })
-        toast({
-          title: "Store mismatch",
-          description: `This product belongs to a different store.`,
-          variant: "destructive",
-        })
-        const newUrl = window.location.pathname
-        window.history.replaceState({}, "", newUrl)
-        return
-      }
-
-      // Get current cart from localStorage (more reliable than state during async operations)
-      let currentCart: CartItem[] = []
-      try {
-        const savedCart = localStorage.getItem("customer_cart")
-        if (savedCart) {
-          currentCart = JSON.parse(savedCart)
-          if (!Array.isArray(currentCart)) {
-            currentCart = []
-          }
-        }
-      } catch (error) {
-        console.error("Error reading cart from localStorage:", error)
-        currentCart = []
-      }
-
-      // Check if product already in cart
-      const existingItem = currentCart.find((item: CartItem) => item.product_id === product.id)
-      if (existingItem) {
-        toast({
-          title: "Product already in cart",
-          description: "This product is already in your cart. You can only add it once.",
-        })
-        // Clean up URL parameters
-        const newUrl = window.location.pathname
-        window.history.replaceState({}, "", newUrl)
-        return
-      }
-
-      // Check if cart has items from different store
-      if (currentCart.length > 0 && currentCart[0].store_id !== storeId) {
-        toast({
-          title: "Different store",
-          description: "You can only add products from the same store. Please clear your cart first.",
-          variant: "destructive",
-        })
-        // Clean up URL parameters
-        const newUrl = window.location.pathname
-        window.history.replaceState({}, "", newUrl)
-        return
-      }
-
-      // Add to cart
-      const newItem: CartItem = {
-        id: Date.now(),
-        product_id: product.id,
-        product_name: product.name,
-        store_id: storeId,
-        price: parseFloat(product.price),
-        quantity: 1,
-      }
-
-      console.log("Adding item to cart:", newItem)
-      const updatedCart = [...currentCart, newItem]
-      console.log("Updated cart:", updatedCart)
-      
-      // Update both state and localStorage
-      // Use startTransition to prevent hydration mismatches
-      startTransition(() => {
-        setCart(updatedCart)
-      })
-      try {
-        localStorage.setItem("customer_cart", JSON.stringify(updatedCart))
-        console.log("Cart saved to localStorage")
-      } catch (error) {
-        console.error("Error saving cart to localStorage:", error)
-      }
-      
-      toast({
-        title: "Product added",
-        description: `${product.name} has been added to your cart.`,
-      })
-
-      // Clean up URL parameters after adding to cart
-      const newUrl = window.location.pathname
-      window.history.replaceState({}, "", newUrl)
-      console.log("URL parameters cleaned up")
-    } catch (error) {
-      console.error("Error adding product from URL:", error)
-      toast({
-        title: "Error",
-        description: "Could not add product to cart. Please try again.",
-        variant: "destructive",
-      })
-      // Clean up URL parameters even on error
-      const newUrl = window.location.pathname
-      window.history.replaceState({}, "", newUrl)
-    }
-  }, [toast])
-  
-  // Update ref immediately whenever handleAddProductFromUrl changes
-  // This ensures the ref is always up to date and available immediately
-  handleAddProductFromUrlRef.current = handleAddProductFromUrl
-  
-  // Also update in useEffect as a backup (runs after render)
   useEffect(() => {
-    console.log("Updating handleAddProductFromUrlRef in useEffect")
-    handleAddProductFromUrlRef.current = handleAddProductFromUrl
-  }, [handleAddProductFromUrl])
-
-  // Handle URL parameters to add product to cart
-  useEffect(() => {
-    console.log("URL params useEffect running:", { 
-      isMounted, 
-      hasProcessedUrlParams, 
+    console.log("URL params useEffect running:", {
+      isMounted,
+      hasProcessedUrlParams,
       isCartLoaded,
-      window: typeof window !== 'undefined'
     })
-    
-    // Only run on client side
-    if (typeof window === 'undefined') {
-      console.log("Skipping: window is undefined")
+
+    if (typeof window === "undefined" || !isMounted || hasProcessedUrlParams || !isCartLoaded) {
       return
     }
-    if (!isMounted) {
-      console.log("Skipping: not mounted yet")
-      return // Wait for component to be mounted
-    }
-    if (hasProcessedUrlParams) {
-      console.log("Skipping: already processed URL params")
-      return
-    }
-    if (!isCartLoaded) {
-      console.log("Skipping: cart not loaded yet")
-      return // Wait for cart to be loaded
-    }
 
-    // Read URL parameters directly from window.location (doesn't require Suspense)
-    try {
-      const urlParams = new URLSearchParams(window.location.search)
-      let storeId = urlParams.get("storeId")
-      let productId = urlParams.get("productId")
-      
-      // Trim whitespace and decode if needed
-      if (storeId) storeId = storeId.trim()
-      if (productId) productId = productId.trim()
-      
-      // Also try reading from hash if not in query params (some URL formats)
-      if (!storeId || !productId) {
-        const hash = window.location.hash
-        if (hash) {
-          const hashParams = new URLSearchParams(hash.substring(1))
-          if (!storeId) storeId = hashParams.get("storeId")?.trim() || null
-          if (!productId) productId = hashParams.get("productId")?.trim() || null
-        }
-      }
+    const urlParams = new URLSearchParams(window.location.search)
+    const storeId = urlParams.get("storeId")
+    const productId = urlParams.get("productId")
 
-      console.log("URL params found:", { 
-        storeId, 
-        productId, 
-        rawSearch: window.location.search,
-        fullUrl: window.location.href
+    console.log("URL params found:", { storeId, productId })
+
+    if (storeId && productId) {
+      console.log("Processing URL parameters:", { storeId, productId })
+      setHasProcessedUrlParams(true)
+      // Call handleAddProductFromUrl directly - it's in scope and available
+      handleAddProductFromUrl(productId, storeId).catch((error: unknown) => {
+        console.error("Error adding product from URL:", error)
       })
-
-      if (storeId && productId) {
-        console.log("Processing URL parameters:", { storeId, productId })
-        
-        // Set flag first to prevent re-processing
-        setHasProcessedUrlParams(true)
-        
-        // Call the function to add product to cart
-        // Use a small delay to ensure everything is initialized
-        const addProduct = () => {
-          console.log("Calling handleAddProductFromUrl with:", { productId, storeId })
-          
-          const handler = handleAddProductFromUrlRef.current
-          if (handler) {
-            console.log("Handler found, calling...")
-            handler(productId, storeId).catch((error: unknown) => {
-              console.error("Error adding product from URL:", error)
-              try {
-                toastRef.current({
-                  title: "Error",
-                  description: "Could not add product to cart. Please try again.",
-                  variant: "destructive",
-                })
-              } catch (e) {
-                console.error("Error showing toast:", e)
-              }
-            })
-          } else {
-            console.warn("Handler not found in ref, calling handleAddProductFromUrl directly...")
-            // Fallback: call handleAddProductFromUrl directly
-            handleAddProductFromUrl(productId, storeId).catch((error: unknown) => {
-              console.error("Error adding product from URL (direct call):", error)
-              try {
-                toastRef.current({
-                  title: "Error",
-                  description: "Could not add product to cart. Please try again.",
-                  variant: "destructive",
-                })
-              } catch (e) {
-                console.error("Error showing toast:", e)
-              }
-            })
-          }
-        }
-        
-        // Try immediately first
-        if (handleAddProductFromUrlRef.current) {
-          console.log("Ref is ready, calling immediately")
-          addProduct()
-        } else {
-          // If ref not ready, wait a bit
-          console.log("Ref not ready, waiting 100ms...")
-          const timeoutId = setTimeout(() => {
-            console.log("Timeout executed, calling addProduct")
-            addProduct()
-          }, 100)
-          
-          // Cleanup
-          return () => {
-            clearTimeout(timeoutId)
-          }
-        }
-      } else {
-        console.log("No storeId or productId in URL")
-      }
-    } catch (error) {
-      console.error("Error reading URL parameters:", error)
     }
-  }, [hasProcessedUrlParams, isCartLoaded, isMounted])
+  }, [hasProcessedUrlParams, isCartLoaded, isMounted, handleAddProductFromUrl])
 
   const handleNfcRead = async () => {
     if (!isNfcSupported) {
@@ -478,8 +252,7 @@ export default function CustomerPage() {
 
     setIsNfcReading(true)
     try {
-      // @ts-ignore - NDEFReader is not in TypeScript types yet
-      const reader = new NDEFReader()
+      const reader = new window.NDEFReader()
       await reader.scan()
 
       reader.addEventListener("reading", async (event: any) => {
@@ -487,10 +260,10 @@ export default function CustomerPage() {
           const record = event.message.records[0]
           const url = new TextDecoder().decode(record.data)
           console.log("NFC URL decoded:", url)
-          
+
           let productId: string | null = null
           let storeId: string | null = null
-          
+
           // Try to parse as full URL first (e.g., https://tapcart-fr.onrender.com/customer?storeId=X&productId=Y)
           try {
             const urlObj = new URL(url)
@@ -498,16 +271,6 @@ export default function CustomerPage() {
             productId = params.get("productId")
             storeId = params.get("storeId")
             console.log("Parsed from full URL:", { productId, storeId })
-            
-            // If it's a full URL with customer path, navigate to it so URL params are processed automatically
-            // This way, when the page loads, it will automatically add the product to cart
-            if (urlObj.pathname.includes('/customer') && productId && storeId) {
-              console.log("Full customer URL detected, navigating to:", url)
-              // Navigate to the URL - the page will load and process URL params automatically
-              window.location.href = url
-              setIsNfcReading(false)
-              return
-            }
           } catch (e) {
             // If not a full URL, try parsing as productID/storeID/website.com format
             const urlParts = url.split("/")
@@ -522,10 +285,9 @@ export default function CustomerPage() {
               console.log("Parsed from simple format:", { productId, storeId })
             }
           }
-          
+
           if (productId && storeId) {
-            console.log("Adding product to cart from NFC:", { productId, storeId })
-            // Add product to cart directly
+            // Add product to cart
             await addProductToCart(productId, storeId)
           } else {
             console.error("Could not parse productId and storeId from NFC URL:", url)
@@ -537,11 +299,9 @@ export default function CustomerPage() {
           }
         } catch (error) {
           console.error("Error reading NFC:", error)
-          const errorMessage = error instanceof Error ? error.message : "Unknown error"
-          console.error("NFC error details:", errorMessage)
           toast({
             title: "Error reading NFC",
-            description: `Could not read the NFC tag: ${errorMessage}. Please try again.`,
+            description: "Could not read the NFC tag. Please try again.",
             variant: "destructive",
           })
         } finally {
@@ -569,137 +329,31 @@ export default function CustomerPage() {
 
   const addProductToCart = async (productId: string, storeId: string) => {
     try {
-      // Clean and validate parameters
-      productId = productId?.trim() || ""
-      storeId = storeId?.trim() || ""
-      
-      if (!productId || !storeId) {
-        console.error("Invalid parameters in addProductToCart:", { productId, storeId })
-        toast({
-          title: "Invalid parameters",
-          description: "Product ID and Store ID are required.",
-          variant: "destructive",
-        })
-        return
-      }
-      
       console.log("addProductToCart called with:", { productId, storeId })
       const apiUrl = `/api/customer/product?productId=${encodeURIComponent(productId)}&storeId=${encodeURIComponent(storeId)}`
-      console.log("Fetching product from API:", apiUrl)
-      console.log("Full API URL:", window.location.origin + apiUrl)
-      
-      const response = await fetch(apiUrl, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        cache: 'no-store', // Ensure we always fetch fresh data
-      })
-      
+      console.log("Fetching product from:", apiUrl)
+
+      const response = await fetch(apiUrl)
       console.log("API response status:", response.status)
-      
+
       if (!response.ok) {
-        let errorData: { error?: string } = {}
-        try {
-          errorData = await response.json()
-        } catch (e) {
-          const text = await response.text()
-          console.error("Failed to parse error response:", text)
-          errorData = { error: `Server error: ${response.status} ${response.statusText}` }
-        }
-        
-        console.error("API error in addProductToCart:", errorData)
-        console.error("Product lookup failed:", {
-          productId,
-          storeId,
-          status: response.status,
-          error: errorData
-        })
-        
+        const data = await response.json().catch(() => ({}))
+        console.error("API error:", data)
         toast({
           title: "Product not found",
-          description: errorData.error || `Product "${productId}" is not available in store "${storeId}". Please check if the product exists in the inventory.`,
+          description: data.error || `Product ${productId} is not available in store ${storeId}.`,
           variant: "destructive",
         })
         return
       }
-      
+
       const data = await response.json()
-      console.log("Product data received from API:", data)
-      
-      if (!data || !data.product) {
-        console.error("Invalid API response structure:", data)
-        toast({
-          title: "Invalid response",
-          description: "The server returned an invalid response. Please try again.",
-          variant: "destructive",
-        })
-        return
-      }
+      console.log("Product data received:", data)
 
       const product = data.product
-      console.log("Product found in inventory:", {
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        stock: product.stock,
-        custom_id: product.custom_id,
-        store_id: product.store_id
-      })
-
-      if (!product.id || !product.name) {
-        console.error("Product data incomplete:", product)
-        toast({
-          title: "Invalid product data",
-          description: "The product data is incomplete. Please try again.",
-          variant: "destructive",
-        })
-        return
-      }
-      
-      // Verify product has stock
-      if (product.stock <= 0) {
-        console.error("Product out of stock:", product)
-        toast({
-          title: "Product out of stock",
-          description: `"${product.name}" is currently out of stock.`,
-          variant: "destructive",
-        })
-        return
-      }
-      
-      // Verify store_id matches
-      if (product.store_id !== storeId) {
-        console.error("Store ID mismatch:", {
-          expected: storeId,
-          actual: product.store_id,
-          product
-        })
-        toast({
-          title: "Store mismatch",
-          description: `This product belongs to a different store. Expected: ${storeId}, Found: ${product.store_id}`,
-          variant: "destructive",
-        })
-        return
-      }
-
-      // Get current cart from localStorage (more reliable than state during async operations)
-      let currentCart: CartItem[] = []
-      try {
-        const savedCart = localStorage.getItem("customer_cart")
-        if (savedCart) {
-          currentCart = JSON.parse(savedCart)
-          if (!Array.isArray(currentCart)) {
-            currentCart = []
-          }
-        }
-      } catch (error) {
-        console.error("Error reading cart from localStorage:", error)
-        currentCart = []
-      }
 
       // Check if product already in cart
-      const existingItem = currentCart.find((item: CartItem) => item.product_id === product.id)
+      const existingItem = cart.find((item) => item.product_id === product.id)
       if (existingItem) {
         toast({
           title: "Product already in cart",
@@ -709,7 +363,7 @@ export default function CustomerPage() {
       }
 
       // Check if cart has items from different store
-      if (currentCart.length > 0 && currentCart[0].store_id !== storeId) {
+      if (cart.length > 0 && cart[0].store_id !== storeId) {
         toast({
           title: "Different store",
           description: "You can only add products from the same store. Please clear your cart first.",
@@ -724,32 +378,16 @@ export default function CustomerPage() {
         product_id: product.id,
         product_name: product.name,
         store_id: storeId,
-        price: parseFloat(product.price),
+        price: Number.parseFloat(product.price),
         quantity: 1,
       }
 
-      console.log("Adding item to cart:", newItem)
-      const updatedCart = [...currentCart, newItem]
-      console.log("Updated cart:", updatedCart)
-      
-      // Update both state and localStorage
-      // Use startTransition to prevent hydration mismatches
-      startTransition(() => {
-        setCart(updatedCart)
-      })
-      try {
-        localStorage.setItem("customer_cart", JSON.stringify(updatedCart))
-        console.log("Cart saved to localStorage")
-      } catch (error) {
-        console.error("Error saving cart to localStorage:", error)
-      }
-      
+      setCart([...cart, newItem])
       toast({
         title: "Product added",
         description: `${product.name} has been added to your cart.`,
       })
     } catch (error) {
-      console.error("Error in addProductToCart:", error)
       toast({
         title: "Error",
         description: "Could not add product to cart. Please try again.",
@@ -759,9 +397,7 @@ export default function CustomerPage() {
   }
 
   const removeFromCart = (itemId: number) => {
-    startTransition(() => {
-      setCart(cart.filter((item) => item.id !== itemId))
-    })
+    setCart(cart.filter((item) => item.id !== itemId))
     toast({
       title: "Removed",
       description: "Product removed from cart.",
@@ -959,11 +595,9 @@ export default function CustomerPage() {
           title: "Order placed",
           description: "Your order has been placed successfully!",
         })
-        
+
         // Clear cart and reset form
-        startTransition(() => {
-          setCart([])
-        })
+        setCart([])
         localStorage.removeItem("customer_cart")
         setPhone("")
         setOtp("")
@@ -972,10 +606,10 @@ export default function CustomerPage() {
         setCouponCode("")
         setDiscount(0)
         setPaymentMethod("")
-        
+
         // Close dialog
         setIsCheckoutOpen(false)
-        
+
         // Show success message with download link
         if (data.billUrl) {
           setTimeout(() => {
@@ -998,20 +632,8 @@ export default function CustomerPage() {
     }
   }
 
-  // Calculate totals - use empty values if not ready to prevent hydration mismatch
-  // Use useMemo to prevent recalculation on every render
-  // IMPORTANT: Hooks must be called before any conditional returns
-  const totals = useMemo(() => {
-    // Only calculate if mounted and cart is loaded, otherwise return empty totals
-    if (!isMounted || !isCartLoaded) {
-      return { subtotal: 0, discount: 0, total: 0 }
-    }
-    return calculateTotal()
-  }, [cart, discount, isMounted, isCartLoaded])
-
-  // Prevent hydration mismatch by not rendering until mounted and cart is loaded
-  // This ensures server and client render the same initial content
-  if (typeof window === 'undefined' || !isMounted || !isCartLoaded) {
+  // Prevent hydration mismatch by not rendering until mounted
+  if (!isMounted || !isCartLoaded) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
         <div className="text-white text-lg">Loading...</div>
@@ -1019,15 +641,16 @@ export default function CustomerPage() {
     )
   }
 
+  // Calculate totals only after component is mounted and cart is loaded to prevent hydration mismatch
+  const totals = calculateTotal()
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold text-white mb-4">Customer Shopping</h1>
-            <p className="text-slate-300 text-lg">
-              Tap on NFC tags to add products to your cart
-            </p>
+            <p className="text-slate-300 text-lg">Tap on NFC tags to add products to your cart</p>
           </div>
 
           {/* NFC Reading Section */}
@@ -1098,17 +721,16 @@ export default function CustomerPage() {
                   <p className="text-slate-400 text-lg">No items in cart</p>
                 </div>
               ) : (
-                <div className="space-y-4" suppressHydrationWarning>
+                <div className="space-y-4">
                   {cart.map((item) => (
                     <div
                       key={item.id}
                       className="flex items-center justify-between p-4 bg-white/5 rounded-lg border border-white/10"
-                      suppressHydrationWarning
                     >
                       <div className="flex-1">
-                        <h3 className="text-white font-semibold" suppressHydrationWarning>{item.product_name}</h3>
-                        <p className="text-slate-400 text-sm" suppressHydrationWarning>Store ID: {item.store_id}</p>
-                        <p className="text-cyan-400 font-bold mt-1" suppressHydrationWarning>₹{item.price.toFixed(2)}</p>
+                        <h3 className="text-white font-semibold">{item.product_name}</h3>
+                        <p className="text-slate-400 text-sm">Store ID: {item.store_id}</p>
+                        <p className="text-cyan-400 font-bold mt-1">₹{item.price.toFixed(2)}</p>
                       </div>
                       <Button
                         variant="ghost"
@@ -1120,20 +742,20 @@ export default function CustomerPage() {
                       </Button>
                     </div>
                   ))}
-                  <div className="border-t border-white/10 pt-4 mt-4" suppressHydrationWarning>
-                    <div className="flex justify-between text-slate-300 mb-2" suppressHydrationWarning>
+                  <div className="border-t border-white/10 pt-4 mt-4">
+                    <div className="flex justify-between text-slate-300 mb-2">
                       <span>Subtotal:</span>
-                      <span suppressHydrationWarning>₹{totals.subtotal.toFixed(2)}</span>
+                      <span>₹{totals.subtotal.toFixed(2)}</span>
                     </div>
                     {discount > 0 && (
-                      <div className="flex justify-between text-green-400 mb-2" suppressHydrationWarning>
+                      <div className="flex justify-between text-green-400 mb-2">
                         <span>Discount:</span>
-                        <span suppressHydrationWarning>-₹{discount.toFixed(2)}</span>
+                        <span>-₹{discount.toFixed(2)}</span>
                       </div>
                     )}
-                    <div className="flex justify-between text-white font-bold text-lg pt-2 border-t border-white/10" suppressHydrationWarning>
+                    <div className="flex justify-between text-white font-bold text-lg pt-2 border-t border-white/10">
                       <span>Total:</span>
-                      <span suppressHydrationWarning>₹{totals.total.toFixed(2)}</span>
+                      <span>₹{totals.total.toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
@@ -1197,11 +819,7 @@ export default function CustomerPage() {
                       Verified
                     </Button>
                   ) : (
-                    <Button
-                      onClick={verifyOTP}
-                      disabled={isVerifying}
-                      className="bg-green-600 hover:bg-green-700"
-                    >
+                    <Button onClick={verifyOTP} disabled={isVerifying} className="bg-green-600 hover:bg-green-700">
                       {isVerifying ? "Verifying..." : "Verify"}
                     </Button>
                   )}
@@ -1283,4 +901,3 @@ export default function CustomerPage() {
     </div>
   )
 }
-
