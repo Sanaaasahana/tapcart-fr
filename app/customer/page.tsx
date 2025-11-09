@@ -458,18 +458,25 @@ export default function CustomerPage() {
 
       const data = await response.json()
 
-      if (response.ok) {
+      if (response.ok && data.success) {
         setOtpSent(true)
         toast({
           title: "OTP sent",
           description: "Please check your phone for the OTP code.",
         })
+        // In development, show OTP in console for testing
+        if (data.otp && process.env.NODE_ENV === "development") {
+          console.log(`[DEV] OTP for ${phone}: ${data.otp}`)
+        }
       } else {
+        const errorMsg = data.details || data.error || "Could not send OTP. Please try again."
         toast({
-          title: "Error",
-          description: data.error || "Could not send OTP. Please try again.",
+          title: "Error sending OTP",
+          description: errorMsg,
           variant: "destructive",
         })
+        // Log detailed error for debugging
+        console.error("OTP send error:", data)
       }
     } catch (error) {
       toast({
