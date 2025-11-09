@@ -767,18 +767,18 @@ export default function CustomerPage() {
 
       {/* Checkout Dialog */}
       <Dialog open={isCheckoutOpen} onOpenChange={setIsCheckoutOpen}>
-        <DialogContent className="max-w-md bg-slate-800 border-white/10 text-white">
+        <DialogContent className="max-w-md w-[95vw] sm:w-full bg-slate-800 border-white/10 text-white max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-white">Checkout</DialogTitle>
-            <DialogDescription className="text-slate-300">
+            <DialogTitle className="text-white text-xl sm:text-2xl">Checkout</DialogTitle>
+            <DialogDescription className="text-slate-300 text-sm sm:text-base">
               Enter your phone number and verify with OTP to proceed
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="space-y-5 sm:space-y-4">
             {/* Phone Number */}
             <div>
-              <Label htmlFor="phone" className="text-white">
+              <Label htmlFor="phone" className="text-white text-base sm:text-sm font-medium block mb-2">
                 Phone Number
               </Label>
               <div className="flex gap-2 mt-1">
@@ -788,9 +788,13 @@ export default function CustomerPage() {
                   placeholder="Enter phone number"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="bg-slate-700 border-white/20 text-white"
+                  className="bg-slate-700 border-white/20 text-white h-14 sm:h-10 text-lg sm:text-base px-4"
                 />
-                <Button onClick={sendOTP} disabled={otpSent} className="bg-blue-600 hover:bg-blue-700">
+                <Button 
+                  onClick={sendOTP} 
+                  disabled={otpSent} 
+                  className="bg-blue-600 hover:bg-blue-700 h-14 sm:h-10 text-base sm:text-sm whitespace-nowrap"
+                >
                   {otpSent ? "Sent" : "Send OTP"}
                 </Button>
               </div>
@@ -799,10 +803,10 @@ export default function CustomerPage() {
             {/* OTP */}
             {otpSent && (
               <div>
-                <Label htmlFor="otp" className="text-white">
+                <Label htmlFor="otp" className="text-white text-base sm:text-sm font-medium block mb-2">
                   Enter OTP
                 </Label>
-                <div className="flex gap-2 mt-1">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-2">
                   <Input
                     id="otp"
                     type="text"
@@ -810,23 +814,23 @@ export default function CustomerPage() {
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
                     maxLength={6}
-                    className="bg-slate-700 border-white/20 text-white"
+                    className="bg-slate-700 border-white/20 text-white h-14 sm:h-10 text-xl sm:text-base text-center tracking-widest font-semibold px-4"
                     disabled={otpVerified}
                   />
                   {otpVerified ? (
-                    <Button disabled className="bg-green-600 hover:bg-green-700">
-                      <CheckCircle className="w-4 h-4 mr-2" />
+                    <Button disabled className="bg-green-600 hover:bg-green-700 h-14 sm:h-10 text-base sm:text-sm whitespace-nowrap">
+                      <CheckCircle className="w-5 h-5 sm:w-4 sm:h-4 mr-2" />
                       Verified
                     </Button>
                   ) : (
-                    <Button onClick={verifyOTP} disabled={isVerifying} className="bg-green-600 hover:bg-green-700">
+                    <Button onClick={verifyOTP} disabled={isVerifying} className="bg-green-600 hover:bg-green-700 h-14 sm:h-10 text-base sm:text-sm whitespace-nowrap">
                       {isVerifying ? "Verifying..." : "Verify"}
                     </Button>
                   )}
                 </div>
                 {otpVerified && (
-                  <p className="text-green-400 text-sm mt-2 flex items-center gap-1">
-                    <CheckCircle className="w-4 h-4" />
+                  <p className="text-green-400 text-sm sm:text-xs mt-3 sm:mt-2 flex items-center gap-1">
+                    <CheckCircle className="w-5 h-5 sm:w-4 sm:h-4" />
                     Phone number verified successfully
                   </p>
                 )}
@@ -835,19 +839,19 @@ export default function CustomerPage() {
 
             {/* Coupon Code */}
             <div>
-              <Label htmlFor="coupon" className="text-white">
+              <Label htmlFor="coupon" className="text-white text-base sm:text-sm font-medium block mb-2">
                 Coupon Code (Optional)
               </Label>
-              <div className="flex gap-2 mt-1">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-2">
                 <Input
                   id="coupon"
                   type="text"
                   placeholder="Enter coupon code"
                   value={couponCode}
                   onChange={(e) => setCouponCode(e.target.value)}
-                  className="bg-slate-700 border-white/20 text-white"
+                  className="bg-slate-700 border-white/20 text-white h-14 sm:h-10 text-base sm:text-sm px-4"
                 />
-                <Button onClick={applyCoupon} className="bg-purple-600 hover:bg-purple-700">
+                <Button onClick={applyCoupon} className="bg-purple-600 hover:bg-purple-700 h-14 sm:h-10 text-base sm:text-sm whitespace-nowrap">
                   Apply
                 </Button>
               </div>
@@ -855,23 +859,23 @@ export default function CustomerPage() {
 
             {/* Payment Method */}
             <div>
-              <Label className="text-white mb-2 block">Payment Method</Label>
+              <Label className="text-white text-base sm:text-sm font-medium mb-3 sm:mb-2 block">Payment Method</Label>
               <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
-                <div className="flex items-center space-x-2 p-3 bg-slate-700/50 rounded-lg mb-2">
-                  <RadioGroupItem value="card" id="card" />
-                  <Label htmlFor="card" className="text-white cursor-pointer">
+                <div className="flex items-center space-x-3 sm:space-x-2 p-4 sm:p-3 bg-slate-700/50 rounded-lg mb-3 sm:mb-2 cursor-pointer hover:bg-slate-700/70 transition-colors">
+                  <RadioGroupItem value="card" id="card" className="w-5 h-5 sm:w-4 sm:h-4" />
+                  <Label htmlFor="card" className="text-white cursor-pointer text-base sm:text-sm flex-1">
                     Card Payment
                   </Label>
                 </div>
-                <div className="flex items-center space-x-2 p-3 bg-slate-700/50 rounded-lg mb-2">
-                  <RadioGroupItem value="upi" id="upi" />
-                  <Label htmlFor="upi" className="text-white cursor-pointer">
+                <div className="flex items-center space-x-3 sm:space-x-2 p-4 sm:p-3 bg-slate-700/50 rounded-lg mb-3 sm:mb-2 cursor-pointer hover:bg-slate-700/70 transition-colors">
+                  <RadioGroupItem value="upi" id="upi" className="w-5 h-5 sm:w-4 sm:h-4" />
+                  <Label htmlFor="upi" className="text-white cursor-pointer text-base sm:text-sm flex-1">
                     UPI Payment
                   </Label>
                 </div>
-                <div className="flex items-center space-x-2 p-3 bg-slate-700/50 rounded-lg">
-                  <RadioGroupItem value="pay_at_desk" id="pay_at_desk" />
-                  <Label htmlFor="pay_at_desk" className="text-white cursor-pointer">
+                <div className="flex items-center space-x-3 sm:space-x-2 p-4 sm:p-3 bg-slate-700/50 rounded-lg cursor-pointer hover:bg-slate-700/70 transition-colors">
+                  <RadioGroupItem value="pay_at_desk" id="pay_at_desk" className="w-5 h-5 sm:w-4 sm:h-4" />
+                  <Label htmlFor="pay_at_desk" className="text-white cursor-pointer text-base sm:text-sm flex-1">
                     Pay at Desk
                   </Label>
                 </div>
@@ -879,8 +883,8 @@ export default function CustomerPage() {
             </div>
 
             {/* Total */}
-            <div className="border-t border-white/10 pt-4">
-              <div className="flex justify-between text-white font-bold text-lg">
+            <div className="border-t border-white/10 pt-5 sm:pt-4">
+              <div className="flex justify-between text-white font-bold text-xl sm:text-lg">
                 <span>Total Amount:</span>
                 <span>₹{totals.total.toFixed(2)}</span>
               </div>
@@ -890,8 +894,7 @@ export default function CustomerPage() {
             <Button
               onClick={processPayment}
               disabled={!otpVerified || !paymentMethod}
-              className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              size="lg"
+              className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed h-14 sm:h-12 text-base sm:text-sm font-semibold"
             >
               {!otpVerified ? "Verify OTP First" : !paymentMethod ? "Select Payment Method" : "Complete Payment"}
             </Button>
