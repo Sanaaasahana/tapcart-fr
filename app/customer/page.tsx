@@ -236,7 +236,11 @@ export default function CustomerPage() {
     }
   }, [toast])
   
-  // Update ref whenever handleAddProductFromUrl changes
+  // Update ref immediately whenever handleAddProductFromUrl changes
+  // This ensures the ref is always up to date
+  handleAddProductFromUrlRef.current = handleAddProductFromUrl
+  
+  // Also update in useEffect as a backup
   useEffect(() => {
     console.log("Updating handleAddProductFromUrlRef")
     handleAddProductFromUrlRef.current = handleAddProductFromUrl
@@ -283,73 +287,75 @@ export default function CustomerPage() {
         // Set flag first to prevent re-processing
         setHasProcessedUrlParams(true)
         
-        // Use a ref to track if component is still mounted
-        const mountedRef = { current: true }
+        // Store productId and storeId in variables that won't change
+        const productIdToAdd = productId
+        const storeIdToAdd = storeId
         
-        // Call the function directly after a small delay to ensure ref is set
-        // Use requestAnimationFrame to ensure DOM is ready
-        requestAnimationFrame(() => {
-          setTimeout(() => {
-            if (!mountedRef.current) return
-            
-            console.log("Calling handleAddProductFromUrl with:", { productId, storeId })
-            const handler = handleAddProductFromUrlRef.current
-            if (handler) {
-              handler(productId, storeId).catch((error: unknown) => {
-                if (!mountedRef.current) return
-                console.error("Error adding product from URL:", error)
-                try {
-                  toastRef.current({
-                    title: "Error",
-                    description: "Could not add product to cart. Please try again.",
-                    variant: "destructive",
-                  })
-                } catch (e) {
-                  console.error("Error showing toast:", e)
-                }
-              })
-            } else {
-              console.error("handleAddProductFromUrlRef.current is null, retrying...")
-              // Retry once after a short delay
-              setTimeout(() => {
-                if (!mountedRef.current) return
-                
-                const retryHandler = handleAddProductFromUrlRef.current
-                if (retryHandler) {
-                  console.log("Retrying handleAddProductFromUrl with:", { productId, storeId })
-                  retryHandler(productId, storeId).catch((error: unknown) => {
-                    if (!mountedRef.current) return
-                    console.error("Error adding product from URL (retry):", error)
-                    try {
-                      toastRef.current({
-                        title: "Error",
-                        description: "Could not add product to cart. Please try again.",
-                        variant: "destructive",
-                      })
-                    } catch (e) {
-                      console.error("Error showing toast:", e)
-                    }
-                  })
-                } else {
-                  console.error("handleAddProductFromUrlRef.current is still null after retry")
+        // Call the function directly - use a small delay to ensure everything is ready
+        // Store the timeout ID for cleanup
+        console.log("Setting timeout to call handleAddProductFromUrl in 200ms...")
+        const timeoutId = setTimeout(() => {
+          console.log("Timeout executed! Calling handleAddProductFromUrl with:", { productId: productIdToAdd, storeId: storeIdToAdd })
+          
+          // Try to get the handler from ref first
+          const handler = handleAddProductFromUrlRef.current
+          console.log("Handler from ref:", handler ? "found" : "not found")
+          
+          if (handler) {
+            console.log("Handler found in ref, calling...")
+            handler(productIdToAdd, storeIdToAdd).catch((error: unknown) => {
+              console.error("Error adding product from URL:", error)
+              try {
+                toastRef.current({
+                  title: "Error",
+                  description: "Could not add product to cart. Please try again.",
+                  variant: "destructive",
+                })
+              } catch (e) {
+                console.error("Error showing toast:", e)
+              }
+            })
+          } else {
+            // If ref is not set yet, wait a bit more and retry
+            console.log("Ref not set yet, retrying in 100ms...")
+            setTimeout(() => {
+              const retryHandler = handleAddProductFromUrlRef.current
+              console.log("Retry: Handler from ref:", retryHandler ? "found" : "not found")
+              if (retryHandler) {
+                console.log("Retry: Handler found, calling...")
+                retryHandler(productIdToAdd, storeIdToAdd).catch((error: unknown) => {
+                  console.error("Error adding product from URL (retry):", error)
                   try {
                     toastRef.current({
                       title: "Error",
-                      description: "Could not add product to cart. Please refresh the page and try again.",
+                      description: "Could not add product to cart. Please try again.",
                       variant: "destructive",
                     })
                   } catch (e) {
                     console.error("Error showing toast:", e)
                   }
+                })
+              } else {
+                console.error("Ref still not set after retry, showing error")
+                try {
+                  toastRef.current({
+                    title: "Error",
+                    description: "Could not add product to cart. Please refresh the page and try again.",
+                    variant: "destructive",
+                  })
+                } catch (e) {
+                  console.error("Error showing toast:", e)
                 }
-              }, 200)
-            }
-          }, 150)
-        })
+              }
+            }, 100)
+          }
+        }, 200)
         
-        // Cleanup function to prevent state updates after unmount
+        console.log("Timeout ID set:", timeoutId)
+        
+        // Cleanup function to clear timeout if component unmounts
         return () => {
-          mountedRef.current = false
+          clearTimeout(timeoutId)
         }
       } else {
         console.log("No storeId or productId in URL")
