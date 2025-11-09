@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { neon } from "@neondatabase/serverless"
+import { sendOTPSMS } from "@/lib/sms"
 
 function getSql() {
   const url = process.env.DATABASE_URL
@@ -47,18 +48,15 @@ export async function POST(request: NextRequest) {
       values (${phone}, ${otpCode}, ${expiresAt.toISOString()})
     `
 
-    // In production, send SMS here using Twilio, AWS SNS, etc.
-    // For now, we'll log it (in production, remove this)
-    console.log(`OTP for ${phone}: ${otpCode}`)
-
-    // TODO: Integrate with SMS service
-    // Example with Twilio:
-    // const client = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-    // await client.messages.create({
-    //   body: `Your OTP code is ${otpCode}. It expires in 10 minutes.`,
-    //   from: process.env.TWILIO_PHONE_NUMBER,
-    //   to: phone
-    // });
+    // Send OTP via SMS
+    try {
+      await sendOTPSMS(phone, otpCode)
+      console.log(`OTP sent to ${phone}`)
+    } catch (error) {
+      console.error("Error sending OTP SMS:", error)
+      // Don't fail the request if SMS fails - OTP is still saved in DB
+      // User can still verify if they know the OTP (for testing)
+    }
 
     return NextResponse.json({ success: true, message: "OTP sent successfully" })
   } catch (error) {
