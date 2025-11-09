@@ -32,7 +32,10 @@ export async function GET(request: NextRequest) {
     const productId = searchParams.get("productId")
     const storeId = searchParams.get("storeId")
 
+    console.log("API: Product lookup request:", { productId, storeId })
+
     if (!productId || !storeId) {
+      console.error("API: Missing parameters", { productId, storeId })
       return NextResponse.json({ error: "Product ID and Store ID are required" }, { status: 400 })
     }
 
@@ -42,35 +45,102 @@ export async function GET(request: NextRequest) {
     await ensureProductsTable(sql)
 
     // Get product by custom_id or id
+    // First, try to find the product without stock check to see if it exists
     let product
-    if (isNaN(Number(productId))) {
-      // It's a custom_id
-      product = await sql`
-        select id, store_id, name, (price::float) as price, (stock::int) as stock, custom_id
-        from products
-        where store_id = ${storeId} and custom_id = ${productId} and stock > 0
-        limit 1
-      `
-    } else {
-      // It's a numeric id
+    const isNumericId = !isNaN(Number(productId))
+    
+    console.log("API: Product ID type:", isNumericId ? "numeric" : "custom_id")
+    
+    if (isNumericId) {
+      // It's a numeric id - try both with and without stock check
+      console.log("API: Searching by numeric ID:", Number(productId))
       product = await sql`
         select id, store_id, name, (price::float) as price, (stock::int) as stock, custom_id
         from products
         where store_id = ${storeId} and id = ${Number(productId)} and stock > 0
         limit 1
       `
+      
+      // If not found with stock > 0, check if product exists at all
+      if (!product || product.length === 0) {
+        console.log("API: Product not found with stock > 0, checking if product exists...")
+        const productCheck = await sql`
+          select id, store_id, name, (price::float) as price, (stock::int) as stock, custom_id
+          from products
+          where store_id = ${storeId} and id = ${Number(productId)}
+          limit 1
+        `
+        if (productCheck && productCheck.length > 0) {
+          console.log("API: Product exists but out of stock:", productCheck[0])
+          return NextResponse.json(
+            { error: "Product is out of stock" },
+            { status: 404 }
+          )
+        }
+      }
+    } else {
+      // It's a custom_id
+      console.log("API: Searching by custom_id:", productId)
+      product = await sql`
+        select id, store_id, name, (price::float) as price, (stock::int) as stock, custom_id
+        from products
+        where store_id = ${storeId} and custom_id = ${productId} and stock > 0
+        limit 1
+      `
+      
+      // If not found with stock > 0, check if product exists at all
+      if (!product || product.length === 0) {
+        console.log("API: Product not found with stock > 0, checking if product exists...")
+        const productCheck = await sql`
+          select id, store_id, name, (price::float) as price, (stock::int) as stock, custom_id
+          from products
+          where store_id = ${storeId} and custom_id = ${productId}
+          limit 1
+        `
+        if (productCheck && productCheck.length > 0) {
+          console.log("API: Product exists but out of stock:", productCheck[0])
+          return NextResponse.json(
+            { error: "Product is out of stock" },
+            { status: 404 }
+          )
+        }
+      }
     }
 
     if (!product || product.length === 0) {
+      console.error("API: Product not found in database", { productId, storeId, isNumericId })
+      
+      // Try a broader search to see what products exist for this store
+      const allProducts = await sql`
+        select id, store_id, name, custom_id, stock
+        from products
+        where store_id = ${storeId}
+        limit 10
+      `
+      console.log("API: Products in store:", allProducts)
+      
       return NextResponse.json(
-        { error: "Product not found or out of stock" },
+        { 
+          error: `Product "${productId}" not found in store "${storeId}". Please verify the product ID and store ID are correct.`,
+          debug: {
+            searchedFor: { productId, storeId },
+            productsInStore: allProducts.length
+          }
+        },
         { status: 404 }
       )
     }
 
+    console.log("API: Product found successfully:", {
+      id: product[0].id,
+      name: product[0].name,
+      custom_id: product[0].custom_id,
+      stock: product[0].stock
+    })
+
     return NextResponse.json({ product: product[0] })
   } catch (error) {
-    console.error("Product GET error:", error)
+    console.error("API: Product GET error:", error)
     const errorMessage = error instanceof Error ? error.message : "Unknown error"
     return NextResponse.json(
       { error: "Internal server error", details: errorMessage },
