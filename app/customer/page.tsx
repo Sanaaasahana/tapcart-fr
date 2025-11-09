@@ -279,50 +279,78 @@ export default function CustomerPage() {
 
       if (storeId && productId) {
         console.log("Processing URL parameters:", { storeId, productId })
+        
+        // Set flag first to prevent re-processing
         setHasProcessedUrlParams(true)
+        
+        // Use a flag to track if component is still mounted
+        let isMounted = true
         
         // Call the function directly after a small delay to ensure ref is set
         // Use requestAnimationFrame to ensure DOM is ready
         requestAnimationFrame(() => {
           setTimeout(() => {
+            if (!isMounted) return
+            
             console.log("Calling handleAddProductFromUrl with:", { productId, storeId })
             const handler = handleAddProductFromUrlRef.current
             if (handler) {
               handler(productId, storeId).catch((error: unknown) => {
+                if (!isMounted) return
                 console.error("Error adding product from URL:", error)
-                toastRef.current({
-                  title: "Error",
-                  description: "Could not add product to cart. Please try again.",
-                  variant: "destructive",
-                })
+                try {
+                  toastRef.current({
+                    title: "Error",
+                    description: "Could not add product to cart. Please try again.",
+                    variant: "destructive",
+                  })
+                } catch (e) {
+                  console.error("Error showing toast:", e)
+                }
               })
             } else {
               console.error("handleAddProductFromUrlRef.current is null, retrying...")
               // Retry once after a short delay
               setTimeout(() => {
+                if (!isMounted) return
+                
                 const retryHandler = handleAddProductFromUrlRef.current
                 if (retryHandler) {
                   console.log("Retrying handleAddProductFromUrl with:", { productId, storeId })
                   retryHandler(productId, storeId).catch((error: unknown) => {
+                    if (!isMounted) return
                     console.error("Error adding product from URL (retry):", error)
-                    toastRef.current({
-                      title: "Error",
-                      description: "Could not add product to cart. Please try again.",
-                      variant: "destructive",
-                    })
+                    try {
+                      toastRef.current({
+                        title: "Error",
+                        description: "Could not add product to cart. Please try again.",
+                        variant: "destructive",
+                      })
+                    } catch (e) {
+                      console.error("Error showing toast:", e)
+                    }
                   })
                 } else {
                   console.error("handleAddProductFromUrlRef.current is still null after retry")
-                  toastRef.current({
-                    title: "Error",
-                    description: "Could not add product to cart. Please refresh the page and try again.",
-                    variant: "destructive",
-                  })
+                  try {
+                    toastRef.current({
+                      title: "Error",
+                      description: "Could not add product to cart. Please refresh the page and try again.",
+                      variant: "destructive",
+                    })
+                  } catch (e) {
+                    console.error("Error showing toast:", e)
+                  }
                 }
               }, 200)
             }
           }, 100)
         })
+        
+        // Cleanup function to prevent state updates after unmount
+        return () => {
+          isMounted = false
+        }
       } else {
         console.log("No storeId or productId in URL")
       }
