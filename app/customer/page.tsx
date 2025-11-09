@@ -92,38 +92,48 @@ export default function CustomerPage() {
     if (typeof window === 'undefined') return
 
     try {
-      const response = await fetch(`/api/customer/product?productId=${productId}&storeId=${storeId}`)
-      const data = await response.json()
-
+      const response = await fetch(`/api/customer/product?productId=${encodeURIComponent(productId)}&storeId=${encodeURIComponent(storeId)}`)
+      
       if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
         toast({
           title: "Product not found",
-          description: data.error || "This product is not available in the store inventory.",
+          description: data.error || `Product ${productId} is not available in store ${storeId}.`,
           variant: "destructive",
         })
         // Clean up URL parameters even on error
-        if (typeof window !== 'undefined') {
-          const newUrl = window.location.pathname
-          window.history.replaceState({}, "", newUrl)
-        }
+        const newUrl = window.location.pathname
+        window.history.replaceState({}, "", newUrl)
         return
       }
 
+      const data = await response.json()
       const product = data.product
 
-      // Get current cart from state or localStorage
+      if (!product) {
+        toast({
+          title: "Product not found",
+          description: "This product is not available in the store inventory.",
+          variant: "destructive",
+        })
+        const newUrl = window.location.pathname
+        window.history.replaceState({}, "", newUrl)
+        return
+      }
+
+      // Get current cart from localStorage (more reliable than state during async operations)
       let currentCart: CartItem[] = []
-      if (cart.length > 0) {
-        currentCart = cart
-      } else if (typeof window !== 'undefined') {
-        try {
-          const savedCart = localStorage.getItem("customer_cart")
-          if (savedCart) {
-            currentCart = JSON.parse(savedCart)
+      try {
+        const savedCart = localStorage.getItem("customer_cart")
+        if (savedCart) {
+          currentCart = JSON.parse(savedCart)
+          if (!Array.isArray(currentCart)) {
+            currentCart = []
           }
-        } catch (error) {
-          console.error("Error reading cart from localStorage:", error)
         }
+      } catch (error) {
+        console.error("Error reading cart from localStorage:", error)
+        currentCart = []
       }
 
       // Check if product already in cart
@@ -134,10 +144,8 @@ export default function CustomerPage() {
           description: "This product is already in your cart. You can only add it once.",
         })
         // Clean up URL parameters
-        if (typeof window !== 'undefined') {
-          const newUrl = window.location.pathname
-          window.history.replaceState({}, "", newUrl)
-        }
+        const newUrl = window.location.pathname
+        window.history.replaceState({}, "", newUrl)
         return
       }
 
@@ -149,10 +157,8 @@ export default function CustomerPage() {
           variant: "destructive",
         })
         // Clean up URL parameters
-        if (typeof window !== 'undefined') {
-          const newUrl = window.location.pathname
-          window.history.replaceState({}, "", newUrl)
-        }
+        const newUrl = window.location.pathname
+        window.history.replaceState({}, "", newUrl)
         return
       }
 
@@ -167,14 +173,13 @@ export default function CustomerPage() {
       }
 
       const updatedCart = [...currentCart, newItem]
-      setCart(updatedCart)
       
-      if (typeof window !== 'undefined') {
-        try {
-          localStorage.setItem("customer_cart", JSON.stringify(updatedCart))
-        } catch (error) {
-          console.error("Error saving cart to localStorage:", error)
-        }
+      // Update both state and localStorage
+      setCart(updatedCart)
+      try {
+        localStorage.setItem("customer_cart", JSON.stringify(updatedCart))
+      } catch (error) {
+        console.error("Error saving cart to localStorage:", error)
       }
       
       toast({
@@ -183,10 +188,8 @@ export default function CustomerPage() {
       })
 
       // Clean up URL parameters after adding to cart
-      if (typeof window !== 'undefined') {
-        const newUrl = window.location.pathname
-        window.history.replaceState({}, "", newUrl)
-      }
+      const newUrl = window.location.pathname
+      window.history.replaceState({}, "", newUrl)
     } catch (error) {
       console.error("Error adding product from URL:", error)
       toast({
@@ -195,17 +198,16 @@ export default function CustomerPage() {
         variant: "destructive",
       })
       // Clean up URL parameters even on error
-      if (typeof window !== 'undefined') {
-        const newUrl = window.location.pathname
-        window.history.replaceState({}, "", newUrl)
-      }
+      const newUrl = window.location.pathname
+      window.history.replaceState({}, "", newUrl)
     }
-  }, [cart, toast])
+  }, [toast])
 
   // Handle URL parameters to add product to cart
   useEffect(() => {
     // Only run on client side
     if (typeof window === 'undefined') return
+    if (!isMounted) return // Wait for component to be mounted
     if (hasProcessedUrlParams) return
     if (!isCartLoaded) return // Wait for cart to be loaded
 
@@ -217,8 +219,8 @@ export default function CustomerPage() {
 
       if (storeId && productId) {
         setHasProcessedUrlParams(true)
-        // Wait a bit for everything to be ready
-        setTimeout(() => {
+        // Wait a bit for everything to be ready, then process
+        const timeoutId = setTimeout(() => {
           handleAddProductFromUrl(productId, storeId).catch((error: unknown) => {
             console.error("Error adding product from URL:", error)
             toast({
@@ -227,12 +229,14 @@ export default function CustomerPage() {
               variant: "destructive",
             })
           })
-        }, 100)
+        }, 200)
+        
+        return () => clearTimeout(timeoutId)
       }
     } catch (error) {
       console.error("Error reading URL parameters:", error)
     }
-  }, [hasProcessedUrlParams, handleAddProductFromUrl, isCartLoaded, toast])
+  }, [hasProcessedUrlParams, handleAddProductFromUrl, isCartLoaded, isMounted, toast])
 
   const handleNfcRead = async () => {
     if (!isNfcSupported) {
