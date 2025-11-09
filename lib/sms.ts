@@ -50,11 +50,24 @@ export async function sendSMS(options: SMSOptions): Promise<void> {
   const authToken = process.env.TWILIO_AUTH_TOKEN
   const fromNumber = process.env.TWILIO_PHONE_NUMBER
   
-  // If Twilio is not configured, log and return (for development)
+  // Debug logging
+  console.log(`[SMS] Attempting to send SMS:`)
+  console.log(`[SMS] - To: ${formattedPhone} (original: ${to})`)
+  console.log(`[SMS] - From: ${fromNumber || 'NOT SET'}`)
+  console.log(`[SMS] - Account SID: ${accountSid ? accountSid.substring(0, 10) + '...' : 'NOT SET'}`)
+  console.log(`[SMS] - Auth Token: ${authToken ? 'SET' : 'NOT SET'}`)
+  
+  // If Twilio is not configured, log and throw error
   if (!accountSid || !authToken || !fromNumber) {
-    console.log(`[SMS] Twilio not configured. Would send to ${formattedPhone}: ${body}`)
-    console.log(`[SMS] To enable real SMS, set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_PHONE_NUMBER in your environment variables`)
-    return
+    const missing = []
+    if (!accountSid) missing.push('TWILIO_ACCOUNT_SID')
+    if (!authToken) missing.push('TWILIO_AUTH_TOKEN')
+    if (!fromNumber) missing.push('TWILIO_PHONE_NUMBER')
+    
+    const errorMsg = `[SMS] Twilio not configured. Missing: ${missing.join(', ')}`
+    console.error(errorMsg)
+    console.error(`[SMS] Would send to ${formattedPhone}: ${body}`)
+    throw new Error(`Twilio configuration missing: ${missing.join(', ')}`)
   }
   
   try {
@@ -63,6 +76,8 @@ export async function sendSMS(options: SMSOptions): Promise<void> {
     const twilio = require("twilio")
     const client = twilio(accountSid, authToken)
     
+    console.log(`[SMS] Sending message via Twilio...`)
+    
     // Send SMS
     const message = await client.messages.create({
       body,
@@ -70,22 +85,43 @@ export async function sendSMS(options: SMSOptions): Promise<void> {
       to: formattedPhone,
     })
     
-    console.log(`[SMS] Sent successfully to ${formattedPhone}. Message SID: ${message.sid}`)
+    console.log(`[SMS] ✅ Sent successfully to ${formattedPhone}`)
+    console.log(`[SMS] Message SID: ${message.sid}`)
+    console.log(`[SMS] Status: ${message.status}`)
   } catch (error: any) {
-    console.error(`[SMS] Failed to send to ${formattedPhone}:`, error)
-    // Don't throw error - we don't want SMS failures to break the app
-    // In production, you might want to log to an error tracking service
+    console.error(`[SMS] ❌ Failed to send to ${formattedPhone}`)
+    console.error(`[SMS] Error details:`, {
+      code: error.code,
+      message: error.message,
+      status: error.status,
+      moreInfo: error.moreInfo,
+    })
+    
+    // Provide specific error messages
+    let errorMessage = 'Failed to send SMS'
     if (error.code === 21211) {
-      console.error(`[SMS] Invalid phone number format: ${formattedPhone}`)
+      errorMessage = `Invalid phone number format: ${formattedPhone}. Please check the number format.`
+      console.error(`[SMS] 💡 Tip: Phone number should be in E.164 format (e.g., +919876543210)`)
     } else if (error.code === 21608) {
-      console.error(`[SMS] Unverified phone number. Add ${formattedPhone} to Twilio verified numbers for testing.`)
+      errorMessage = `Unverified phone number: ${formattedPhone}. Add this number to Twilio verified numbers for testing.`
+      console.error(`[SMS] 💡 Tip: Go to Twilio Console → Phone Numbers → Verified Caller IDs → Add ${formattedPhone}`)
     } else if (error.code === 21408) {
-      console.error(`[SMS] Permission denied. Check your Twilio account permissions.`)
+      errorMessage = `Permission denied. Check your Twilio account permissions.`
+      console.error(`[SMS] 💡 Tip: Verify your Twilio account is active and has SMS permissions`)
     } else if (error.code === 21614) {
-      console.error(`[SMS] Invalid 'From' number. Check your TWILIO_PHONE_NUMBER environment variable.`)
+      errorMessage = `Invalid 'From' number: ${fromNumber}. Check your TWILIO_PHONE_NUMBER environment variable.`
+      console.error(`[SMS] 💡 Tip: TWILIO_PHONE_NUMBER should be in E.164 format (e.g., +1234567890)`)
     } else if (error.code === 20003) {
-      console.error(`[SMS] Authentication failed. Check your TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN.`)
+      errorMessage = `Authentication failed. Check your TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN.`
+      console.error(`[SMS] 💡 Tip: Verify your credentials in Twilio Console`)
+    } else if (error.code === 21217) {
+      errorMessage = `Invalid phone number. The number ${formattedPhone} is not valid.`
+    } else {
+      errorMessage = error.message || 'Unknown error occurred while sending SMS'
     }
+    
+    // Throw error so calling code can handle it
+    throw new Error(errorMessage)
   }
 }
 
