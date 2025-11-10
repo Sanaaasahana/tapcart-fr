@@ -70,8 +70,11 @@ export default function StoreExportPage() {
     load()
   }, [])
 
-  // Filter and search logic
+  // Filter and search logic - exclude sold products (stock = 0) from export
   const filteredItems = items.filter(item => {
+    // Exclude products with stock = 0 from export
+    if (item.stock === 0) return false
+    
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          item.custom_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          item.category.toLowerCase().includes(searchTerm.toLowerCase())
@@ -105,9 +108,9 @@ export default function StoreExportPage() {
     setSelectAll(newSelected.size === filteredItems.length && filteredItems.length > 0)
   }
 
-  // Generate export links
+  // Generate export links - only for in-stock products
   const generateLinks = () => {
-    const selectedProducts = items.filter(item => selectedItems.has(item.id))
+    const selectedProducts = items.filter(item => selectedItems.has(item.id) && item.stock > 0)
     const links = selectedProducts.map(product => {
       const productId = product.custom_id || product.id.toString()
       return `https://tapcart-fr.onrender.com/customer?storeId=${storeName}&productId=${productId}`
@@ -116,9 +119,10 @@ export default function StoreExportPage() {
     return links.join('\n')
   }
 
-  // Export to CSV
+  // Export to CSV - only in-stock products
   const exportToCSV = (exportAll = false) => {
-    const productsToExport = exportAll ? items : items.filter(item => selectedItems.has(item.id))
+    const allInStockItems = items.filter(item => item.stock > 0)
+    const productsToExport = exportAll ? allInStockItems : allInStockItems.filter(item => selectedItems.has(item.id))
     
     if (productsToExport.length === 0) {
       alert('No products selected for export')
@@ -148,9 +152,10 @@ export default function StoreExportPage() {
     document.body.removeChild(link)
   }
 
-  // Export only links to CSV
+  // Export only links to CSV - only in-stock products
   const exportLinksOnlyCSV = (exportAll = false) => {
-    const productsToExport = exportAll ? items : items.filter(item => selectedItems.has(item.id))
+    const allInStockItems = items.filter(item => item.stock > 0)
+    const productsToExport = exportAll ? allInStockItems : allInStockItems.filter(item => selectedItems.has(item.id))
     
     if (productsToExport.length === 0) {
       alert('No products selected for export')
@@ -252,11 +257,11 @@ export default function StoreExportPage() {
                 <div className="flex flex-wrap gap-4">
                   <Button
                     onClick={() => exportToCSV(true)}
-                    disabled={!storeName || items.length === 0}
+                    disabled={!storeName || filteredItems.length === 0}
                     className="gap-2"
                   >
                     <Download className="h-4 w-4" />
-                    Download All Products CSV ({items.length} items)
+                    Download All In-Stock Products CSV ({filteredItems.length} items)
                   </Button>
                   <Button
                     onClick={() => exportToCSV(false)}
@@ -362,8 +367,10 @@ export default function StoreExportPage() {
                     <Link className="mx-auto h-12 w-12 text-slate-400 mb-4" />
                     <h3 className="text-lg font-medium text-slate-900 mb-2">No products found</h3>
                     <p className="text-slate-500">
-                      {items.length === 0 
-                        ? "No products available to export."
+                      {items.filter(item => item.stock > 0).length === 0 
+                        ? items.length === 0
+                          ? "No products available to export."
+                          : "No in-stock products available. Only products with stock > 0 can be exported."
                         : "Try adjusting your search or filter criteria."
                       }
                     </p>
