@@ -10,7 +10,7 @@ export default async function StorePurchasesPage() {
   const session = await getStoreSession()
 
   if (!session?.isAuthenticated) {
-    redirect("/store/login")
+    redirect("/")
   }
 
   const purchases = await getPurchasesByStoreId(session.storeId)
