@@ -473,7 +473,7 @@ export default function CustomerPage() {
 
   if (!isMounted || !isCartLoaded) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50/30 via-stone-50 to-teal-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-stone-50 to-teal-600/10">
         <div className="text-center">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-tr from-teal-600 to-cyan-600 mb-4 shadow-2xl">
             <ShoppingCart className="w-7 h-7 text-white" strokeWidth={1.6} />
@@ -499,7 +499,7 @@ export default function CustomerPage() {
 
   const CartItemRow = ({ item }: { item: CartItem }) => (
     <div className="group flex items-center gap-4 p-4 bg-white rounded-xl border border-stone-100 hover:shadow-md transition-shadow duration-150">
-      <div className="flex-shrink-0 w-14 h-14 rounded-lg bg-gradient-to-br from-teal-100 to-cyan-100 flex items-center justify-center border border-teal-200/40">
+      <div className="flex-shrink-0 w-14 h-14 rounded-lg bg-gradient-to-br from-teal-50 to-cyan-50 flex items-center justify-center border border-teal-100/40">
         <Package className="w-6 h-6 text-teal-700" strokeWidth={1.5} />
       </div>
       <div className="flex-1 min-w-0">
@@ -527,7 +527,7 @@ export default function CustomerPage() {
   )
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50/30 via-stone-50 to-teal-50/60 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-stone-50 to-teal-600/10 py-8">
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left / Main column */}
@@ -540,7 +540,7 @@ export default function CustomerPage() {
                 </div>
                 <div>
                   <h1 className="text-3xl font-bold text-stone-800 leading-tight">Your Cart</h1>
-                  
+                 
                 </div>
               </div>
 
@@ -554,7 +554,7 @@ export default function CustomerPage() {
             <Card className="rounded-2xl shadow-sm border border-stone-100 overflow-hidden">
               <CardHeader>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-teal-100 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-lg bg-teal-50 flex items-center justify-center">
                     <Radio className="w-5 h-5 text-teal-700" strokeWidth={2} />
                   </div>
                   <div>
@@ -645,15 +645,13 @@ export default function CustomerPage() {
 
                       <div className="flex justify-between items-center pt-3 border-t">
                         <div className="text-lg font-semibold">Total</div>
-                        <div className="text-2xl font-bold text-teal-700">₹{totals.total.toFixed(2)}</div>
+                        <div className="text-2xl font-bold text-teal-800">₹{totals.total.toFixed(2)}</div>
                       </div>
-                      
-                      {cart.length > 0 && (
-                        <Button onClick={handleCheckout} className="w-full mt-4 h-12 bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white rounded-lg shadow-md">
-                          <Checkout className="w-4 h-4 mr-2" strokeWidth={2} />
-                          Proceed to Checkout
-                        </Button>
-                      )}
+
+                      {/* Checkout button below total */}
+                      <div className="mt-4">
+                        <Button onClick={handleCheckout} className="w-full h-12 bg-gradient-to-r from-teal-600 to-cyan-600 text-white rounded-lg shadow-md">Proceed to Checkout</Button>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -674,14 +672,17 @@ export default function CustomerPage() {
                 </div>
 
                 <div className="space-y-3">
-                  <Button onClick={handleCheckout} className="w-full h-12 bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white rounded-lg shadow-md">Proceed to Checkout</Button>
-
-                  <Button onClick={() => { navigator.clipboard?.writeText(window.location.href); toast({ title: 'Link copied', description: 'Share this cart link.' }) }} variant="ghost" className="w-full h-10">Share Cart</Button>
-
                   <div className="pt-3 border-t">
                     <div className="text-xs text-stone-500">Need help?</div>
                     <div className="text-sm text-stone-700 mt-1">Call store: <span className="font-medium">+91 80000 00000</span></div>
                   </div>
+
+                  {/* Checkout button below totals in sidebar as well */}
+                  <div className="mt-4">
+                    <Button onClick={handleCheckout} className="w-full h-12 bg-gradient-to-r from-teal-600 to-cyan-600 text-white rounded-lg shadow-md">Proceed to Checkout</Button>
+                  </div>
+
+                  <Button onClick={() => { navigator.clipboard?.writeText(window.location.href); toast({ title: 'Link copied', description: 'Share this cart link.' }) }} variant="ghost" className="w-full h-10">Share Cart</Button>
                 </div>
               </div>
 
@@ -693,26 +694,21 @@ export default function CustomerPage() {
 
       {/* Checkout Dialog (refined visuals) */}
       <Dialog open={isCheckoutOpen} onOpenChange={setIsCheckoutOpen}>
-        <DialogContent className="max-w-2xl w-[95vw] sm:w-full bg-white rounded-2xl shadow-2xl p-6 overflow-auto">
+        <DialogContent className="relative max-w-2xl w-[95vw] sm:w-full bg-white rounded-2xl shadow-2xl p-6 overflow-auto">
+          {/* Dismiss (cross) */}
+          <button aria-label="Close checkout" onClick={() => setIsCheckoutOpen(false)} className="absolute right-4 top-4 w-9 h-9 rounded-full bg-stone-50 hover:bg-stone-100 flex items-center justify-center">
+            <X className="w-4 h-4 text-stone-600" />
+          </button>
+
           <DialogHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-teal-100 flex items-center justify-center">
-                  <Lock className="w-5 h-5 text-teal-700" strokeWidth={2} />
-                </div>
-                <div>
-                  <DialogTitle className="text-lg font-semibold text-stone-800">Secure Checkout</DialogTitle>
-                  <DialogDescription className="text-sm text-stone-500">Verify your number and choose payment method to complete your order.</DialogDescription>
-                </div>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-teal-50 flex items-center justify-center">
+                <Lock className="w-5 h-5 text-teal-700" strokeWidth={2} />
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsCheckoutOpen(false)}
-                className="h-8 w-8 rounded-lg hover:bg-stone-100"
-              >
-                <X className="w-4 h-4 text-stone-600" />
-              </Button>
+              <div>
+                <DialogTitle className="text-lg font-semibold text-stone-800">Secure Checkout</DialogTitle>
+                <DialogDescription className="text-sm text-stone-500">Verify your number and choose payment method to complete your order.</DialogDescription>
+              </div>
             </div>
           </DialogHeader>
 
@@ -723,9 +719,9 @@ export default function CustomerPage() {
               <div className="flex gap-3">
                 <div className="relative flex-1">
                   <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-stone-400 w-4 h-4" strokeWidth={1.6} />
-                  <Input id="phone" type="tel" placeholder="Enter your phone number" value={phone} onChange={(e) => setPhone(e.target.value)} className="pl-10 h-12 text-slate-900" />
+                  <Input id="phone" type="tel" placeholder="Enter your phone number" value={phone} onChange={(e) => setPhone(e.target.value)} className="pl-10 h-12 text-black" />
                 </div>
-                <Button onClick={sendOTP} disabled={otpSent} className="h-12 px-4 bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white">
+                <Button onClick={sendOTP} disabled={otpSent} className="h-12 px-4 bg-gradient-to-r from-teal-600 to-cyan-600 text-white">
                   {otpSent ? (
                     <>
                       <CheckCircle className="w-4 h-4 mr-2" /> Sent
@@ -742,11 +738,11 @@ export default function CustomerPage() {
               <div>
                 <Label htmlFor="otp" className="text-sm font-medium text-stone-700 mb-2 block">Enter OTP</Label>
                 <div className="flex gap-3 items-center">
-                  <Input id="otp" value={otp} onChange={(e) => setOtp(e.target.value)} maxLength={6} className="h-12 text-center font-semibold tracking-widest text-lg text-slate-900" disabled={otpVerified} />
+                  <Input id="otp" value={otp} onChange={(e) => setOtp(e.target.value)} maxLength={6} className="h-12 text-center font-semibold tracking-widest text-lg text-black" disabled={otpVerified} />
                   {otpVerified ? (
                     <Button disabled className="h-12 bg-teal-50 text-teal-700">Verified</Button>
                   ) : (
-                    <Button onClick={verifyOTP} disabled={isVerifying} className="h-12 px-4 bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white">
+                    <Button onClick={verifyOTP} disabled={isVerifying} className="h-12 px-4 bg-gradient-to-r from-teal-600 to-cyan-600 text-white">
                       {isVerifying ? "Verifying..." : "Verify"}
                     </Button>
                   )}
@@ -759,8 +755,8 @@ export default function CustomerPage() {
             <div>
               <Label htmlFor="coupon" className="text-sm font-medium text-stone-700 mb-2 block">Coupon code (optional)</Label>
               <div className="flex gap-3">
-                <Input id="coupon" value={couponCode} onChange={(e) => setCouponCode(e.target.value)} className="h-12 text-slate-900" />
-                <Button onClick={applyCoupon} className="h-12 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"><Tag className="w-4 h-4 mr-2" />Apply</Button>
+                <Input id="coupon" value={couponCode} onChange={(e) => setCouponCode(e.target.value)} className="h-12" />
+                <Button onClick={applyCoupon} className="h-12 px-4 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white"><Tag className="w-4 h-4 mr-2" />Apply</Button>
               </div>
             </div>
 
@@ -768,7 +764,7 @@ export default function CustomerPage() {
             <div>
               <Label className="text-sm font-medium text-stone-700 mb-3 block">Payment method</Label>
               <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-3">
-                <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition ${paymentMethod === 'card'? 'border-teal-400 bg-teal-50/40': 'border-stone-100 bg-white hover:border-teal-200'}`}>
+                <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition ${paymentMethod === 'card'? 'border-teal-300 bg-teal-50/40': 'border-stone-100 bg-white hover:border-teal-100'}`}>
                   <RadioGroupItem value="card" className="w-4 h-4" />
                   <div className="flex items-center gap-3 flex-1">
                     <div className={`w-9 h-9 rounded-md flex items-center justify-center ${paymentMethod === 'card' ? 'bg-teal-100' : 'bg-stone-100'}`}>
@@ -781,7 +777,7 @@ export default function CustomerPage() {
                   </div>
                 </label>
 
-                <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition ${paymentMethod === 'upi'? 'border-teal-400 bg-teal-50/40': 'border-stone-100 bg-white hover:border-teal-200'}`}>
+                <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition ${paymentMethod === 'upi'? 'border-teal-300 bg-teal-50/40': 'border-stone-100 bg-white hover:border-teal-100'}`}>
                   <RadioGroupItem value="upi" className="w-4 h-4" />
                   <div className="flex items-center gap-3 flex-1">
                     <div className={`w-9 h-9 rounded-md flex items-center justify-center ${paymentMethod === 'upi' ? 'bg-teal-100' : 'bg-stone-100'}`}>
@@ -794,7 +790,7 @@ export default function CustomerPage() {
                   </div>
                 </label>
 
-                <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition ${paymentMethod === 'pay_at_desk'? 'border-teal-400 bg-teal-50/40': 'border-stone-100 bg-white hover:border-teal-200'}`}>
+                <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition ${paymentMethod === 'pay_at_desk'? 'border-teal-300 bg-teal-50/40': 'border-stone-100 bg-white hover:border-teal-100'}`}>
                   <RadioGroupItem value="pay_at_desk" className="w-4 h-4" />
                   <div className="flex items-center gap-3 flex-1">
                     <div className={`w-9 h-9 rounded-md flex items-center justify-center ${paymentMethod === 'pay_at_desk' ? 'bg-teal-100' : 'bg-stone-100'}`}>
@@ -813,10 +809,10 @@ export default function CustomerPage() {
             <div className="pt-4 border-t">
               <div className="flex items-center justify-between mb-3">
                 <div className="text-sm text-stone-600">Total payable</div>
-                <div className="text-xl font-bold text-teal-700">₹{totals.total.toFixed(2)}</div>
+                <div className="text-xl font-bold text-teal-800">₹{totals.total.toFixed(2)}</div>
               </div>
 
-              <Button onClick={processPayment} disabled={!otpVerified || !paymentMethod} className="w-full h-12 bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white rounded-lg shadow-md">
+              <Button onClick={processPayment} disabled={!otpVerified || !paymentMethod} className="w-full h-12 bg-gradient-to-r from-teal-600 to-cyan-600 text-white rounded-lg shadow-md">
                 {!otpVerified ? (
                   <>
                     <Lock className="w-4 h-4 mr-2" /> Verify OTP First
@@ -849,7 +845,7 @@ export default function CustomerPage() {
             </div>
             <div className="ml-4 flex items-center gap-2">
               {confirmedBillUrl && (
-                <Button onClick={() => window.open(confirmedBillUrl!, '_blank')} size="sm" className="bg-teal-700 hover:bg-teal-800 text-white"><Download className="w-4 h-4 mr-2" />Bill</Button>
+                <Button onClick={() => window.open(confirmedBillUrl!, '_blank')} size="sm" className="bg-teal-700 text-white"><Download className="w-4 h-4 mr-2" />Bill</Button>
               )}
               <Button onClick={() => { setPaymentConfirmed(false); setConfirmedOrderId(null); setConfirmedBillUrl(null) }} variant="ghost" size="sm">
                 <X className="w-4 h-4" />
