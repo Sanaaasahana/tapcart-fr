@@ -298,32 +298,32 @@ export default function StoreSalesPage() {
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
-                      <TableRow>
-                        <TableHead>Order ID</TableHead>
-                        <TableHead>Customer Details</TableHead>
-                        <TableHead>Payment Method</TableHead>
-                        <TableHead>Items</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Discount</TableHead>
-                        <TableHead>Final Amount</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Actions</TableHead>
+                      <TableRow className="bg-slate-50">
+                        <TableHead className="text-slate-900 font-semibold">Order ID</TableHead>
+                        <TableHead className="text-slate-900 font-semibold">Customer Details</TableHead>
+                        <TableHead className="text-slate-900 font-semibold">Payment Method</TableHead>
+                        <TableHead className="text-slate-900 font-semibold">Items</TableHead>
+                        <TableHead className="text-slate-900 font-semibold">Amount</TableHead>
+                        <TableHead className="text-slate-900 font-semibold">Discount</TableHead>
+                        <TableHead className="text-slate-900 font-semibold">Final Amount</TableHead>
+                        <TableHead className="text-slate-900 font-semibold">Date</TableHead>
+                        <TableHead className="text-slate-900 font-semibold">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {filteredSales.map((sale) => (
-                        <TableRow key={sale.order_id}>
-                          <TableCell className="font-medium">{sale.order_id}</TableCell>
+                        <TableRow key={sale.order_id} className="hover:bg-slate-50">
+                          <TableCell className="font-medium text-slate-900">{sale.order_id}</TableCell>
                           <TableCell>
                             <div className="space-y-1">
                               <div className="flex items-center gap-2">
-                                <Phone className="w-3 h-3 text-slate-400" />
-                                <span className="text-sm">{sale.customer_phone}</span>
+                                <Phone className="w-3 h-3 text-slate-500" />
+                                <span className="text-sm text-slate-900 font-medium">{sale.customer_phone}</span>
                               </div>
                               {sale.customer_name && (
                                 <div className="flex items-center gap-2">
-                                  <User className="w-3 h-3 text-slate-400" />
-                                  <span className="text-sm text-slate-600">{sale.customer_name}</span>
+                                  <User className="w-3 h-3 text-slate-500" />
+                                  <span className="text-sm text-slate-700">{sale.customer_name}</span>
                                 </div>
                               )}
                             </div>
@@ -333,14 +333,14 @@ export default function StoreSalesPage() {
                             <div className="max-w-xs">
                               <div className="text-sm space-y-1">
                                 {sale.items.map((item, idx) => (
-                                  <div key={idx} className="text-slate-600">
+                                  <div key={idx} className="text-slate-900">
                                     {item.product_name} × {item.quantity}
                                   </div>
                                 ))}
                               </div>
                             </div>
                           </TableCell>
-                          <TableCell className="font-medium">₹{parseFloat(sale.total_amount.toString()).toFixed(2)}</TableCell>
+                          <TableCell className="font-medium text-slate-900">₹{parseFloat(sale.total_amount.toString()).toFixed(2)}</TableCell>
                           <TableCell>
                             {sale.discount_amount > 0 ? (
                               <span className="text-green-600 font-medium">
@@ -350,18 +350,18 @@ export default function StoreSalesPage() {
                               <span className="text-slate-400">—</span>
                             )}
                             {sale.coupon_code && (
-                              <div className="text-xs text-slate-500 mt-1">({sale.coupon_code})</div>
+                              <div className="text-xs text-slate-600 mt-1">({sale.coupon_code})</div>
                             )}
                           </TableCell>
                           <TableCell className="font-bold text-green-600">
                             ₹{parseFloat(sale.final_amount.toString()).toFixed(2)}
                           </TableCell>
                           <TableCell>
-                            <div className="flex items-center gap-2 text-sm text-slate-600">
-                              <Calendar className="w-3 h-3" />
+                            <div className="flex items-center gap-2 text-sm text-slate-900">
+                              <Calendar className="w-3 h-3 text-slate-600" />
                               <span>{new Date(sale.created_at).toLocaleDateString()}</span>
                             </div>
-                            <div className="text-xs text-slate-500 mt-1">
+                            <div className="text-xs text-slate-600 mt-1">
                               {new Date(sale.created_at).toLocaleTimeString()}
                             </div>
                           </TableCell>
@@ -370,6 +370,7 @@ export default function StoreSalesPage() {
                               variant="outline"
                               size="sm"
                               onClick={() => window.open(`/api/customer/bill/${sale.order_id}`, "_blank")}
+                              className="bg-blue-600 text-white border-blue-600 hover:bg-blue-700 hover:text-white"
                             >
                               <Download className="w-3 h-3 mr-1" />
                               Bill
