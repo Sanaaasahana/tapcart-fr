@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { Package2, Search, Filter, IndianRupee, TrendingUp, BarChart3, CheckCircle2, XCircle } from "lucide-react"
+import { Package2, Search, Filter, IndianRupee, TrendingUp, CheckCircle2, XCircle } from "lucide-react"
 
 interface ProductItem {
   id: number
@@ -199,16 +199,19 @@ export default function AllProductsPage() {
             <CardContent>
               <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "in-stock" | "sold")}>
                 <TabsList className="grid w-full max-w-md grid-cols-2 bg-slate-100 p-1.5 mb-6">
+                  
+                  {/* ✅ UPDATED TABS */}
                   <TabsTrigger 
                     value="in-stock" 
-                    className="data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm font-semibold"
+                    className="data-[state=active]:bg-white data-[state=active]:text-black text-slate-600 hover:text-black data-[state=active]:shadow-sm font-semibold transition-colors"
                   >
                     <CheckCircle2 className="w-4 h-4 mr-2" />
                     In Stock ({inStockProducts.length})
                   </TabsTrigger>
+                  
                   <TabsTrigger 
                     value="sold"
-                    className="data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm font-semibold"
+                    className="data-[state=active]:bg-white data-[state=active]:text-black text-slate-600 hover:text-black data-[state=active]:shadow-sm font-semibold transition-colors"
                   >
                     <XCircle className="w-4 h-4 mr-2" />
                     Sold ({soldProducts.length})
@@ -325,5 +328,3 @@ export default function AllProductsPage() {
     </div>
   )
 }
-
-
