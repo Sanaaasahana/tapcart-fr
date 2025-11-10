@@ -10,7 +10,7 @@ export default async function StoreCustomersPage() {
   const session = await getStoreSession()
 
   if (!session?.isAuthenticated) {
-    redirect("/store/login")
+    redirect("/")
   }
 
   const customers = await getCustomersByStoreId(session.storeId)
