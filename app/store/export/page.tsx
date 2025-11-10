@@ -42,6 +42,11 @@ export default function StoreExportPage() {
     try {
       const res = await fetch("/api/store/products")
       if (!res.ok) {
+        if (res.status === 401) {
+          // Redirect to home page instead of login after logout
+          window.location.href = "/"
+          return
+        }
         console.error("Failed to load products:", res.status)
         return
       }
@@ -55,6 +60,10 @@ export default function StoreExportPage() {
         if (sessionRes.ok) {
           const sessionData = await sessionRes.json()
           setStoreName(sessionData.storeId || "")
+        } else if (sessionRes.status === 401) {
+          // Redirect to home page if session check fails
+          window.location.href = "/"
+          return
         }
       } catch (error) {
         console.error("Failed to load store session:", error)
