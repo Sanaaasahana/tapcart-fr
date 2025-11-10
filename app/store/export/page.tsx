@@ -193,38 +193,40 @@ export default function StoreExportPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
       <StoreSidebar />
 
       <div className="lg:ml-64">
         <div className="p-6 lg:p-8">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-slate-900 mb-2">Export Product Links</h1>
-            <p className="text-slate-600">Select products and export their purchase links</p>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent mb-2">
+              Export Product Links
+            </h1>
+            <p className="text-slate-600 font-medium">Select products and export their purchase links</p>
           </div>
 
 
           {/* Search and Filter */}
-          <Card className="border-0 shadow-sm mb-6">
+          <Card className="border border-slate-200 shadow-md mb-6 bg-white">
             <CardHeader>
               <CardTitle className="text-lg font-bold text-slate-900">Search & Filter</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 w-5 h-5" />
                   <Input
                     placeholder="Search products, IDs, or categories..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 h-11 border-slate-300 focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
                 <div>
                   <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                    <SelectTrigger>
-                      <Filter className="w-4 h-4 mr-2" />
+                    <SelectTrigger className="h-11 border-slate-300 focus:border-blue-500 focus:ring-blue-500">
+                      <Filter className="w-4 h-4 mr-2 text-slate-500" />
                       <SelectValue placeholder="Filter by category" />
                     </SelectTrigger>
                     <SelectContent>
@@ -238,7 +240,7 @@ export default function StoreExportPage() {
                   </Select>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-xs">
+                  <Badge variant="outline" className="text-xs font-semibold px-3 py-1.5 bg-slate-100 border-slate-300 text-slate-700">
                     {selectedItems.size} of {filteredItems.length} selected
                   </Badge>
                 </div>
@@ -247,27 +249,27 @@ export default function StoreExportPage() {
           </Card>
 
           {/* Export Actions */}
-          <Card className="border-0 shadow-sm mb-6">
+          <Card className="border border-slate-200 shadow-md mb-6 bg-white">
             <CardHeader>
               <CardTitle className="text-lg font-bold text-slate-900">Export Actions</CardTitle>
-              <CardDescription>Export product links and data</CardDescription>
+              <CardDescription className="text-slate-600">Export product links and data</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex flex-wrap gap-4">
+                <div className="flex flex-wrap gap-3">
                   <Button
                     onClick={() => exportToCSV(true)}
                     disabled={!storeName || filteredItems.length === 0}
-                    className="gap-2"
+                    className="gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md shadow-blue-500/30 font-semibold"
                   >
                     <Download className="h-4 w-4" />
-                    Download All In-Stock Products CSV ({filteredItems.length} items)
+                    Download All CSV ({filteredItems.length} items)
                   </Button>
                   <Button
                     onClick={() => exportToCSV(false)}
                     disabled={selectedItems.size === 0 || !storeName}
                     variant="outline"
-                    className="gap-2 bg-white text-black border-gray-300 hover:bg-gray-50"
+                    className="gap-2 bg-white text-slate-700 border-slate-300 hover:bg-slate-50 hover:border-slate-400 font-semibold shadow-sm"
                   >
                     <Download className="h-4 w-4" />
                     Download Selected CSV ({selectedItems.size} items)
@@ -276,34 +278,35 @@ export default function StoreExportPage() {
                     onClick={() => exportLinksOnlyCSV(false)}
                     disabled={selectedItems.size === 0 || !storeName}
                     variant="outline"
-                    className="gap-2 bg-slate-900 text-white border-slate-900 hover:bg-slate-800"
+                    className="gap-2 bg-gradient-to-r from-slate-800 to-slate-900 text-white border-slate-800 hover:from-slate-900 hover:to-black font-semibold shadow-md"
                   >
                     <Download className="h-4 w-4" />
-                    Download Selected Links Only ({selectedItems.size} items)
+                    Download Links Only ({selectedItems.size})
                   </Button>
                   <Button
                     variant="outline"
                     onClick={copyLinks}
                     disabled={selectedItems.size === 0 || !storeName}
-                    className="gap-2 bg-slate-900 text-white border-slate-900 hover:bg-slate-800"
+                    className="gap-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white border-purple-600 hover:from-purple-700 hover:to-purple-800 font-semibold shadow-md shadow-purple-500/30"
                   >
                     <Link className="h-4 w-4" />
-                    Copy Links ({selectedItems.size} items)
+                    Copy Links ({selectedItems.size})
                   </Button>
                   <Button
-                    variant="secondary"
+                    variant="outline"
                     onClick={() => {
                       setSelectedItems(new Set())
                       setSelectAll(false)
                     }}
                     disabled={selectedItems.size === 0}
+                    className="gap-2 bg-white text-slate-600 border-slate-300 hover:bg-slate-100 hover:text-slate-900 font-semibold"
                   >
                     Clear Selection
                   </Button>
                 </div>
                 {storeName && (
-                  <div className="text-sm text-slate-500">
-                    Links will be formatted as: <code className="bg-slate-100 px-2 py-1 rounded">https://tapcart-fr.onrender.com/customer?storeId={storeName}&productId=product-id</code>
+                  <div className="text-sm text-slate-600 font-medium pt-2 border-t border-slate-200">
+                    Links will be formatted as: <code className="bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700 font-mono text-xs ml-2">https://tapcart-fr.onrender.com/customer?storeId={storeName}&productId=product-id</code>
                   </div>
                 )}
               </div>
@@ -311,7 +314,7 @@ export default function StoreExportPage() {
           </Card>
 
           {/* Products List */}
-          <Card className="border-0 shadow-sm">
+          <Card className="border border-slate-200 shadow-md bg-white">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-xl font-bold text-slate-900">Select Products</CardTitle>
@@ -321,7 +324,7 @@ export default function StoreExportPage() {
                     checked={selectAll}
                     onCheckedChange={handleSelectAll}
                   />
-                  <Label htmlFor="selectAll" className="text-sm font-medium">
+                  <Label htmlFor="selectAll" className="text-sm font-semibold text-slate-700">
                     Select All ({filteredItems.length})
                   </Label>
                 </div>
@@ -333,7 +336,7 @@ export default function StoreExportPage() {
                   <label
                     key={item.id}
                     htmlFor={`item-${item.id}`}
-                    className="flex items-center gap-4 p-4 border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer"
+                    className="flex items-center gap-4 p-5 border-2 border-slate-200 rounded-xl hover:border-blue-300 hover:bg-blue-50/50 cursor-pointer transition-all shadow-sm bg-white"
                   >
                     <Checkbox
                       id={`item-${item.id}`}
@@ -343,18 +346,18 @@ export default function StoreExportPage() {
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
                         <div>
-                          <h3 className="font-medium text-slate-900">{item.name}</h3>
-                          <p className="text-sm text-slate-500">#{item.custom_id || 'No ID'}</p>
+                          <h3 className="font-semibold text-slate-900 text-lg">{item.name}</h3>
+                          <p className="text-sm text-slate-600 font-medium">#{item.custom_id || 'No ID'}</p>
                         </div>
                         <div className="text-right">
-                          <div className="font-medium text-slate-900">₹{item.price.toFixed(2)}</div>
-                          <Badge variant="outline" className="text-xs mt-1">
+                          <div className="font-bold text-slate-900 text-lg">₹{item.price.toFixed(2)}</div>
+                          <Badge variant="outline" className="text-xs mt-2 px-3 py-1 bg-blue-100 text-blue-700 border-blue-300 font-semibold">
                             {item.category}
                           </Badge>
                         </div>
                       </div>
-                      <div className="mt-2">
-                        <code className="text-xs bg-slate-100 px-2 py-1 rounded">
+                      <div className="mt-3">
+                        <code className="text-xs bg-slate-100 px-3 py-2 rounded-lg border border-slate-200 text-slate-700 font-mono">
                           https://tapcart-fr.onrender.com/customer?storeId={storeName}&productId={item.custom_id || item.id}
                         </code>
                       </div>
