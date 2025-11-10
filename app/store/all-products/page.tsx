@@ -43,6 +43,15 @@ export default function AllProductsPage() {
       .filter((i) => i.name.toLowerCase().includes(search.toLowerCase()) || String(i.id).includes(search) || (i.custom_id && i.custom_id.toLowerCase().includes(search.toLowerCase())))
   }, [items, search, category])
 
+  // Separate in-stock and sold products
+  const inStockProducts = useMemo(() => {
+    return filtered.filter((i) => i.stock > 0)
+  }, [filtered])
+
+  const soldProducts = useMemo(() => {
+    return filtered.filter((i) => i.stock === 0)
+  }, [filtered])
+
   const categoryTotals = useMemo(() => {
     const map = new Map<string, { items: number; stock: number }>()
     for (const i of filtered) {
@@ -69,14 +78,14 @@ export default function AllProductsPage() {
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className="text-sm">
-                  {filtered.length} products
+                  {inStockProducts.length} in stock • {soldProducts.length} sold
                 </Badge>
               </div>
             </div>
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <Card className="border-0 shadow-sm bg-gradient-to-br from-blue-50 to-cyan-50">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-slate-600">Total Products</CardTitle>
@@ -84,18 +93,29 @@ export default function AllProductsPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-slate-900">{items.length}</div>
-                <p className="text-xs text-slate-500 mt-1">All products in inventory</p>
+                <p className="text-xs text-slate-500 mt-1">All products</p>
               </CardContent>
             </Card>
 
             <Card className="border-0 shadow-sm bg-gradient-to-br from-emerald-50 to-green-50">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-slate-600">Categories</CardTitle>
-                <BarChart3 className="h-4 w-4 text-emerald-600" />
+                <CardTitle className="text-sm font-medium text-slate-600">In Stock</CardTitle>
+                <TrendingUp className="h-4 w-4 text-emerald-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-slate-900">{categories.length - 1}</div>
-                <p className="text-xs text-slate-500 mt-1">Product categories</p>
+                <div className="text-2xl font-bold text-slate-900">{inStockProducts.length}</div>
+                <p className="text-xs text-slate-500 mt-1">Available products</p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-sm bg-gradient-to-br from-orange-50 to-amber-50">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-slate-600">Sold</CardTitle>
+                <Package2 className="h-4 w-4 text-orange-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-slate-900">{soldProducts.length}</div>
+                <p className="text-xs text-slate-500 mt-1">Sold out products</p>
               </CardContent>
             </Card>
 
@@ -106,7 +126,7 @@ export default function AllProductsPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-slate-900">
-                  ₹{items.reduce((sum, item) => sum + (item.price * item.stock), 0).toFixed(2)}
+                  ₹{inStockProducts.reduce((sum, item) => sum + (item.price * item.stock), 0).toFixed(2)}
                 </div>
                 <p className="text-xs text-slate-500 mt-1">Inventory worth</p>
               </CardContent>
@@ -146,7 +166,7 @@ export default function AllProductsPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant="outline" className="text-xs">
-                    Showing {filtered.length} of {items.length} items
+                    Showing {inStockProducts.length + soldProducts.length} of {items.length} items
                   </Badge>
                 </div>
               </div>
@@ -168,14 +188,15 @@ export default function AllProductsPage() {
             </Card>
           )}
 
-          <Card className="border-0 shadow-sm">
+          {/* In Stock Products Section */}
+          <Card className="border-0 shadow-sm mb-6">
             <CardHeader>
-              <CardTitle className="text-xl font-bold text-slate-900">Product Catalog</CardTitle>
-              <CardDescription>Complete list of all products with details</CardDescription>
+              <CardTitle className="text-xl font-bold text-slate-900">In Stock Products ({inStockProducts.length})</CardTitle>
+              <CardDescription>Products currently available in inventory</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {filtered.map((p) => (
+                {inStockProducts.map((p) => (
                   <div key={p.id} className="flex items-center justify-between p-4 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors">
                     <div className="flex-1">
                       <div className="flex items-center gap-3">
@@ -210,15 +231,73 @@ export default function AllProductsPage() {
                     </div>
                   </div>
                 ))}
-                {filtered.length === 0 && (
+                {inStockProducts.length === 0 && (
                   <div className="text-center py-10">
                     <Package2 className="mx-auto h-12 w-12 text-slate-400 mb-4" />
-                    <h3 className="text-lg font-medium text-slate-900 mb-2">No products found</h3>
+                    <h3 className="text-lg font-medium text-slate-900 mb-2">No in-stock products</h3>
                     <p className="text-slate-500">
                       {items.length === 0 
                         ? "No products available in your inventory."
-                        : "Try adjusting your search or filter criteria."
+                        : "All products have been sold."
                       }
+                    </p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Sold Products Section */}
+          <Card className="border-0 shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-xl font-bold text-slate-900">Sold Products ({soldProducts.length})</CardTitle>
+              <CardDescription>Products that have been sold out</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {soldProducts.map((p) => (
+                  <div key={p.id} className="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-slate-50 opacity-75">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-gradient-to-br from-gray-400 to-gray-500 rounded-lg flex items-center justify-center">
+                          <Package2 className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="font-medium text-slate-600 line-through">{p.name}</h3>
+                          <p className="text-sm text-slate-400">#{p.custom_id || 'No ID'}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-6">
+                      <div className="text-center">
+                        <Badge variant="outline" className="text-xs mb-1 bg-slate-100">
+                          {p.category}
+                        </Badge>
+                        <div className="text-xs text-slate-400">Category</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-slate-500 font-medium">₹{p.price.toFixed(2)}</div>
+                        <div className="text-xs text-slate-400">Price</div>
+                      </div>
+                      <div className="text-center">
+                        <Badge variant="destructive" className="text-xs">
+                          Sold Out
+                        </Badge>
+                        <div className="text-xs text-slate-400 mt-1">Stock: 0</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-slate-400 font-medium">—</div>
+                        <div className="text-xs text-slate-400">Value</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {soldProducts.length === 0 && (
+                  <div className="text-center py-10">
+                    <Package2 className="mx-auto h-12 w-12 text-slate-400 mb-4" />
+                    <h3 className="text-lg font-medium text-slate-900 mb-2">No sold products</h3>
+                    <p className="text-slate-500">
+                      All products are currently in stock.
                     </p>
                   </div>
                 )}
