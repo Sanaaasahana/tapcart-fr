@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ShoppingCart, Trash2, Check as Checkout, Radio, CheckCircle, X, Download, Package, Sparkles, IndianRupee, Plus, Minus, CreditCard, Smartphone, Store, Tag, Phone, Lock, Gift } from "lucide-react"
+import { ShoppingCart, Trash2, Check as Checkout, Radio, CheckCircle, X, Download, Package, IndianRupee, CreditCard, Smartphone, Store, Tag, Phone, Lock, Gift } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -277,7 +277,7 @@ export default function CustomerPage() {
 
     setIsNfcReading(true)
     try {
-      const reader = new window.NDEFReader()
+      const reader = new (window as any).NDEFReader()
       await reader.scan()
 
       reader.addEventListener("reading", async (event: any) => {
@@ -665,10 +665,10 @@ export default function CustomerPage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30 flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl shadow-lg mb-4 animate-pulse">
-            <ShoppingCart className="w-8 h-8 text-white" />
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-900 mb-4">
+            <ShoppingCart className="w-6 h-6 text-white" strokeWidth={1.5} />
           </div>
-          <p className="text-slate-700 font-semibold text-lg">Loading your cart...</p>
+          <p className="text-slate-600 text-sm font-medium">Loading your cart...</p>
         </div>
       </div>
     )
@@ -692,22 +692,22 @@ export default function CustomerPage() {
         <div className="max-w-5xl mx-auto">
           {/* Payment Confirmation Alert */}
           {paymentConfirmed && confirmedOrderId && (
-            <Alert className="mb-6 bg-gradient-to-r from-emerald-50 to-green-50 border-2 border-emerald-200 shadow-lg rounded-2xl overflow-hidden">
-              <div className="flex items-start gap-4">
-                <div className="p-2 bg-emerald-100 rounded-full">
-                  <CheckCircle className="h-6 w-6 text-emerald-600" />
+            <Alert className="mb-6 bg-white border border-slate-200 shadow-xl rounded-xl overflow-hidden">
+              <div className="flex items-start gap-4 p-6">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center">
+                  <CheckCircle className="h-5 w-5 text-emerald-600" strokeWidth={2.5} />
                 </div>
                 <div className="flex-1">
-                  <AlertTitle className="text-emerald-900 font-bold text-lg mb-2">Payment Confirmed! 🎉</AlertTitle>
-                  <AlertDescription className="text-emerald-800 mb-4">
-                    <p className="mb-3 font-medium">
-                      Your order <strong className="font-bold text-emerald-900">{confirmedOrderId}</strong> has been confirmed successfully.
+                  <AlertTitle className="text-slate-900 font-semibold text-lg mb-2">Payment Confirmed</AlertTitle>
+                  <AlertDescription className="text-slate-600 mb-4">
+                    <p className="mb-4 text-base">
+                      Your order <span className="font-semibold text-slate-900">{confirmedOrderId}</span> has been confirmed successfully.
                     </p>
                     <div className="flex flex-wrap gap-3">
                       {confirmedBillUrl && (
                         <Button
                           onClick={() => window.open(confirmedBillUrl, "_blank")}
-                          className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white shadow-md hover:shadow-lg transition-all"
+                          className="bg-slate-900 hover:bg-slate-800 text-white border-0 shadow-sm hover:shadow-md transition-all"
                           size="sm"
                         >
                           <Download className="w-4 h-4 mr-2" />
@@ -721,7 +721,7 @@ export default function CustomerPage() {
                           setConfirmedBillUrl(null)
                         }}
                         variant="outline"
-                        className="border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                        className="border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300"
                         size="sm"
                       >
                         <X className="w-4 h-4 mr-2" />
@@ -735,47 +735,46 @@ export default function CustomerPage() {
           )}
 
           {/* Header */}
-          <div className="text-center mb-8 sm:mb-10">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-600 via-blue-500 to-purple-600 rounded-2xl shadow-lg shadow-blue-500/30 mb-4 transform transition-transform hover:scale-105">
-              <ShoppingCart className="w-10 h-10 text-white" />
+          <div className="text-center mb-10 sm:mb-12">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-900 mb-5">
+              <ShoppingCart className="w-8 h-8 text-white" strokeWidth={1.5} />
             </div>
-            <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-slate-900 via-blue-900 to-purple-900 bg-clip-text text-transparent mb-3">
-              Your Shopping Cart
+            <h1 className="text-4xl sm:text-5xl font-semibold text-slate-900 mb-3 tracking-tight">
+              Shopping Cart
             </h1>
-            <p className="text-slate-600 text-lg font-medium">Tap NFC tags to add products or scan QR codes</p>
+            <p className="text-slate-500 text-base font-normal">Tap NFC tags to add products or scan QR codes</p>
           </div>
 
           {/* NFC Reading Section */}
-          <Card className="mb-6 bg-white/80 backdrop-blur-xl border-2 border-blue-100 shadow-xl rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-300">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 pointer-events-none"></div>
-            <CardHeader className="relative z-10 pb-4">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2.5 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl shadow-md">
-                  <Radio className="w-5 h-5 text-white" />
+          <Card className="mb-6 bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden hover:shadow-md transition-all duration-200">
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-3 mb-1">
+                <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center">
+                  <Radio className="w-4 h-4 text-slate-700" strokeWidth={2} />
                 </div>
-                <CardTitle className="text-slate-900 text-xl font-bold">NFC Tag Reader</CardTitle>
+                <CardTitle className="text-slate-900 text-lg font-semibold">NFC Tag Reader</CardTitle>
               </div>
-              <CardDescription className="text-slate-600 font-medium">
+              <CardDescription className="text-slate-500 text-sm font-normal">
                 {isNfcSupported
                   ? "Tap your NFC-enabled device on a product tag to add items instantly"
                   : "NFC is not supported on your device. Please use a device with NFC capability."}
               </CardDescription>
             </CardHeader>
-            <CardContent className="relative z-10">
+            <CardContent>
               <Button
                 onClick={handleNfcRead}
                 disabled={!isNfcSupported || isNfcReading}
-                className="w-full h-14 bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:from-blue-700 hover:via-blue-600 hover:to-cyan-600 text-white font-semibold text-base rounded-xl shadow-lg shadow-blue-500/30 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-500/40 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm rounded-lg shadow-sm hover:shadow transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 size="lg"
               >
                 {isNfcReading ? (
                   <>
-                    <Radio className="w-5 h-5 mr-2 animate-pulse" />
+                    <div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                     Reading NFC Tag...
                   </>
                 ) : (
                   <>
-                    <Radio className="w-5 h-5 mr-2" />
+                    <Radio className="w-4 h-4 mr-2" strokeWidth={2} />
                     Start NFC Reading
                   </>
                 )}
@@ -784,24 +783,23 @@ export default function CustomerPage() {
           </Card>
 
           {/* Cart Section */}
-          <Card className="bg-white/90 backdrop-blur-xl border-2 border-slate-200 shadow-2xl rounded-2xl overflow-hidden" suppressHydrationWarning>
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-purple-50/50 pointer-events-none"></div>
-            <CardHeader className="relative z-10 pb-4 border-b border-slate-200">
+          <Card className="bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden" suppressHydrationWarning>
+            <CardHeader className="pb-5 border-b border-slate-100">
               <div className="flex items-center justify-between flex-wrap gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-gradient-to-br from-emerald-500 to-green-500 rounded-xl shadow-md">
-                    <ShoppingCart className="w-5 h-5 text-white" />
+                  <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center">
+                    <ShoppingCart className="w-4 h-4 text-slate-700" strokeWidth={2} />
                   </div>
                   <div>
-                    <CardTitle className="text-slate-900 text-2xl font-bold flex items-center gap-2">
+                    <CardTitle className="text-slate-900 text-xl font-semibold flex items-center gap-3">
                       Your Cart
                       {cart.length > 0 && (
-                        <span className="text-sm font-semibold px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full">
+                        <span className="text-xs font-medium px-2.5 py-1 bg-slate-100 text-slate-700 rounded-md">
                           {cart.length} {cart.length === 1 ? "item" : "items"}
                         </span>
                       )}
                     </CardTitle>
-                    <CardDescription className="text-slate-600 font-medium mt-1" suppressHydrationWarning>
+                    <CardDescription className="text-slate-500 text-sm font-normal mt-1" suppressHydrationWarning>
                       {cart.length === 0
                         ? "Your cart is empty. Tap on NFC tags to add products."
                         : `Review your items and proceed to checkout`}
@@ -811,52 +809,49 @@ export default function CustomerPage() {
                 {cart.length > 0 && (
                   <Button
                     onClick={handleCheckout}
-                    className="bg-gradient-to-r from-emerald-600 via-green-600 to-emerald-600 hover:from-emerald-700 hover:via-green-700 hover:to-emerald-700 text-white font-semibold shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/40 transition-all duration-300 transform hover:scale-105 h-12 px-6"
+                    className="bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm h-10 px-5 rounded-lg shadow-sm hover:shadow transition-all duration-200"
                   >
-                    <Checkout className="w-5 h-5 mr-2" />
-                    Proceed to Checkout
+                    <Checkout className="w-4 h-4 mr-2" strokeWidth={2} />
+                    Checkout
                   </Button>
                 )}
               </div>
             </CardHeader>
-            <CardContent className="relative z-10 pt-6" suppressHydrationWarning>
+            <CardContent className="pt-6" suppressHydrationWarning>
               {cart.length === 0 ? (
                 <div className="text-center py-16">
-                  <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl mb-6">
-                    <ShoppingCart className="w-12 h-12 text-slate-400" />
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 mb-5">
+                    <ShoppingCart className="w-8 h-8 text-slate-400" strokeWidth={1.5} />
                   </div>
-                  <h3 className="text-2xl font-bold text-slate-900 mb-2">Your cart is empty</h3>
-                  <p className="text-slate-600 font-medium">Start shopping by tapping NFC tags or scanning QR codes</p>
+                  <h3 className="text-xl font-semibold text-slate-900 mb-2">Your cart is empty</h3>
+                  <p className="text-slate-500 text-sm">Start shopping by tapping NFC tags or scanning QR codes</p>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {cart.map((item, index) => (
                     <div
                       key={item.id}
-                      className="group flex items-center gap-4 p-5 bg-gradient-to-br from-white to-slate-50/50 rounded-xl border-2 border-slate-200 hover:border-blue-300 hover:shadow-lg transition-all duration-300 shadow-sm"
-                      style={{ animationDelay: `${index * 50}ms` }}
+                      className="group flex items-center gap-4 p-4 bg-white rounded-lg border border-slate-200 hover:border-slate-300 hover:shadow-sm transition-all duration-200"
                     >
                       {/* Product Icon/Image Placeholder */}
-                      <div className="flex-shrink-0 w-16 h-16 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300">
-                        <Package className="w-8 h-8 text-white" />
+                      <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center">
+                        <Package className="w-6 h-6 text-slate-600" strokeWidth={1.5} />
                       </div>
                       
                       {/* Product Details */}
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-bold text-slate-900 mb-1 truncate">{item.product_name}</h3>
-                        <div className="flex items-center gap-2 text-sm text-slate-600 mb-2">
-                          <Store className="w-3.5 h-3.5" />
-                          <span className="font-medium">Store: {item.store_id}</span>
+                        <h3 className="text-base font-semibold text-slate-900 mb-1 truncate">{item.product_name}</h3>
+                        <div className="flex items-center gap-4 text-xs text-slate-500 mb-2">
+                          <span className="flex items-center gap-1">
+                            <Store className="w-3 h-3" strokeWidth={2} />
+                            Store {item.store_id}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            Qty: <span className="font-medium text-slate-700">{item.quantity}</span>
+                          </span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-1 bg-emerald-50 px-3 py-1 rounded-lg border border-emerald-200">
-                            <IndianRupee className="w-4 h-4 text-emerald-700" />
-                            <span className="text-lg font-bold text-emerald-700">{item.price.toFixed(2)}</span>
-                          </div>
-                          <div className="flex items-center gap-1 text-slate-600 text-sm">
-                            <span className="font-medium">Qty:</span>
-                            <span className="font-bold text-slate-900">{item.quantity}</span>
-                          </div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-base font-semibold text-slate-900">₹{item.price.toFixed(2)}</span>
                         </div>
                       </div>
                       
@@ -865,31 +860,31 @@ export default function CustomerPage() {
                         variant="ghost"
                         size="sm"
                         onClick={() => removeFromCart(item.id)}
-                        className="flex-shrink-0 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg p-2 transition-all duration-200"
+                        className="flex-shrink-0 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg p-2 transition-all duration-200"
                       >
-                        <Trash2 className="w-5 h-5" />
+                        <Trash2 className="w-4 h-4" strokeWidth={2} />
                       </Button>
                     </div>
                   ))}
                   
                   {/* Order Summary */}
-                  <div className="mt-6 pt-6 border-t-2 border-slate-200 bg-gradient-to-br from-slate-50 to-white rounded-xl p-6 space-y-3">
-                    <div className="flex justify-between items-center text-slate-700">
-                      <span className="font-semibold text-base">Subtotal</span>
-                      <span className="font-bold text-lg text-slate-900">₹{totals.subtotal.toFixed(2)}</span>
+                  <div className="mt-6 pt-6 border-t border-slate-200 space-y-3">
+                    <div className="flex justify-between items-center text-slate-600">
+                      <span className="text-sm font-medium">Subtotal</span>
+                      <span className="text-base font-semibold text-slate-900">₹{totals.subtotal.toFixed(2)}</span>
                     </div>
                     {discount > 0 && (
-                      <div className="flex justify-between items-center text-emerald-700 bg-emerald-50 px-4 py-2 rounded-lg border border-emerald-200">
-                        <span className="font-semibold flex items-center gap-2">
-                          <Gift className="w-4 h-4" />
+                      <div className="flex justify-between items-center text-slate-600 bg-slate-50 px-3 py-2 rounded-lg">
+                        <span className="text-sm font-medium flex items-center gap-1.5">
+                          <Gift className="w-3.5 h-3.5" strokeWidth={2} />
                           Discount
                         </span>
-                        <span className="font-bold text-lg">-₹{discount.toFixed(2)}</span>
+                        <span className="text-base font-semibold text-slate-900">-₹{discount.toFixed(2)}</span>
                       </div>
                     )}
-                    <div className="flex justify-between items-center pt-3 border-t-2 border-slate-300">
-                      <span className="text-xl font-bold text-slate-900">Total Amount</span>
-                      <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                    <div className="flex justify-between items-center pt-4 border-t border-slate-200">
+                      <span className="text-lg font-semibold text-slate-900">Total</span>
+                      <span className="text-xl font-semibold text-slate-900">
                         ₹{totals.total.toFixed(2)}
                       </span>
                     </div>
@@ -903,47 +898,45 @@ export default function CustomerPage() {
 
       {/* Checkout Dialog */}
       <Dialog open={isCheckoutOpen} onOpenChange={setIsCheckoutOpen}>
-        <DialogContent className="max-w-lg w-[95vw] sm:w-full bg-white border-2 border-slate-200 shadow-2xl max-h-[90vh] overflow-y-auto rounded-2xl">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-purple-50/50 pointer-events-none rounded-2xl"></div>
-          <DialogHeader className="relative z-10 pb-4 border-b border-slate-200">
+        <DialogContent className="max-w-lg w-[95vw] sm:w-full bg-white border border-slate-200 shadow-xl max-h-[90vh] overflow-y-auto rounded-xl">
+          <DialogHeader className="pb-5 border-b border-slate-100">
             <div className="flex items-center gap-3 mb-2">
-              <div className="p-2.5 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl shadow-md">
-                <Lock className="w-5 h-5 text-white" />
+              <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center">
+                <Lock className="w-4 h-4 text-slate-700" strokeWidth={2} />
               </div>
-              <DialogTitle className="text-slate-900 text-2xl sm:text-3xl font-bold">Secure Checkout</DialogTitle>
+              <DialogTitle className="text-slate-900 text-xl font-semibold">Checkout</DialogTitle>
             </div>
-            <DialogDescription className="text-slate-600 text-base font-medium">
+            <DialogDescription className="text-slate-500 text-sm font-normal">
               Enter your phone number and verify with OTP to proceed with payment
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-6 relative z-10">
+          <div className="space-y-5">
             {/* Phone Number */}
             <div>
-              <Label htmlFor="phone" className="text-slate-900 text-base font-semibold block mb-3 flex items-center gap-2">
-                <Phone className="w-4 h-4 text-blue-600" />
+              <Label htmlFor="phone" className="text-slate-900 text-sm font-medium block mb-2">
                 Phone Number
               </Label>
-              <div className="flex gap-3">
+              <div className="flex gap-2">
                 <div className="relative flex-1">
-                  <Phone className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" strokeWidth={2} />
                   <Input
                     id="phone"
                     type="tel"
                     placeholder="Enter your phone number"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    className="pl-12 h-14 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-slate-900 font-medium bg-white"
+                    className="pl-10 h-11 border border-slate-200 rounded-lg focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all duration-200 text-slate-900 text-sm bg-white"
                   />
                 </div>
                 <Button 
                   onClick={sendOTP} 
                   disabled={otpSent} 
-                  className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-semibold h-14 px-6 rounded-xl shadow-md hover:shadow-lg transition-all whitespace-nowrap disabled:opacity-50"
+                  className="bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm h-11 px-4 rounded-lg shadow-sm hover:shadow transition-all whitespace-nowrap disabled:opacity-50"
                 >
                   {otpSent ? (
                     <>
-                      <CheckCircle className="w-4 h-4 mr-2" />
+                      <CheckCircle className="w-4 h-4 mr-1.5" strokeWidth={2} />
                       Sent
                     </>
                   ) : (
@@ -956,11 +949,10 @@ export default function CustomerPage() {
             {/* OTP */}
             {otpSent && (
               <div>
-                <Label htmlFor="otp" className="text-slate-900 text-base font-semibold block mb-3 flex items-center gap-2">
-                  <Lock className="w-4 h-4 text-emerald-600" />
+                <Label htmlFor="otp" className="text-slate-900 text-sm font-medium block mb-2">
                   Enter OTP
                 </Label>
-                <div className="flex gap-3">
+                <div className="flex gap-2">
                   <Input
                     id="otp"
                     type="text"
@@ -968,23 +960,23 @@ export default function CustomerPage() {
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
                     maxLength={6}
-                    className="flex-1 h-14 text-2xl text-center tracking-[0.5em] font-bold border-2 border-slate-200 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all duration-200 text-slate-900 bg-white"
+                    className="flex-1 h-11 text-lg text-center tracking-[0.3em] font-semibold border border-slate-200 rounded-lg focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all duration-200 text-slate-900 bg-white"
                     disabled={otpVerified}
                   />
                   {otpVerified ? (
-                    <Button disabled className="bg-gradient-to-r from-emerald-600 to-green-600 text-white font-semibold h-14 px-6 rounded-xl shadow-md whitespace-nowrap">
-                      <CheckCircle className="w-5 h-5 mr-2" />
+                    <Button disabled className="bg-slate-100 text-slate-600 font-medium text-sm h-11 px-4 rounded-lg whitespace-nowrap">
+                      <CheckCircle className="w-4 h-4 mr-1.5" strokeWidth={2} />
                       Verified
                     </Button>
                   ) : (
                     <Button 
                       onClick={verifyOTP} 
                       disabled={isVerifying} 
-                      className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white font-semibold h-14 px-6 rounded-xl shadow-md hover:shadow-lg transition-all whitespace-nowrap"
+                      className="bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm h-11 px-4 rounded-lg shadow-sm hover:shadow transition-all whitespace-nowrap"
                     >
                       {isVerifying ? (
                         <>
-                          <div className="w-5 h-5 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          <div className="w-4 h-4 mr-1.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                           Verifying...
                         </>
                       ) : (
@@ -994,9 +986,9 @@ export default function CustomerPage() {
                   )}
                 </div>
                 {otpVerified && (
-                  <div className="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center gap-2">
-                    <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0" />
-                    <p className="text-emerald-700 font-semibold text-sm">Phone number verified successfully!</p>
+                  <div className="mt-2.5 p-2.5 bg-slate-50 border border-slate-200 rounded-lg flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-slate-600 flex-shrink-0" strokeWidth={2} />
+                    <p className="text-slate-700 text-xs font-medium">Phone number verified successfully</p>
                   </div>
                 )}
               </div>
@@ -1004,24 +996,23 @@ export default function CustomerPage() {
 
             {/* Coupon Code */}
             <div>
-              <Label htmlFor="coupon" className="text-slate-900 text-base font-semibold block mb-3 flex items-center gap-2">
-                <Tag className="w-4 h-4 text-purple-600" />
-                Coupon Code <span className="text-slate-500 font-normal text-sm">(Optional)</span>
+              <Label htmlFor="coupon" className="text-slate-900 text-sm font-medium block mb-2">
+                Coupon Code <span className="text-slate-400 font-normal">(Optional)</span>
               </Label>
-              <div className="flex gap-3">
+              <div className="flex gap-2">
                 <Input
                   id="coupon"
                   type="text"
                   placeholder="Enter coupon code"
                   value={couponCode}
                   onChange={(e) => setCouponCode(e.target.value)}
-                  className="flex-1 h-14 border-2 border-slate-200 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-200 text-slate-900 font-medium bg-white"
+                  className="flex-1 h-11 border border-slate-200 rounded-lg focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-all duration-200 text-slate-900 text-sm bg-white"
                 />
                 <Button 
                   onClick={applyCoupon} 
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold h-14 px-6 rounded-xl shadow-md hover:shadow-lg transition-all whitespace-nowrap"
+                  className="bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm h-11 px-4 rounded-lg shadow-sm hover:shadow transition-all whitespace-nowrap"
                 >
-                  <Sparkles className="w-4 h-4 mr-2" />
+                  <Tag className="w-4 h-4 mr-1.5" strokeWidth={2} />
                   Apply
                 </Button>
               </div>
@@ -1029,61 +1020,60 @@ export default function CustomerPage() {
 
             {/* Payment Method */}
             <div>
-              <Label className="text-slate-900 text-base font-semibold mb-4 block flex items-center gap-2">
-                <CreditCard className="w-4 h-4 text-blue-600" />
+              <Label className="text-slate-900 text-sm font-medium mb-3 block">
                 Payment Method
               </Label>
-              <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-3">
+              <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-2">
                 <label
                   htmlFor="card"
-                  className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
+                  className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all duration-200 ${
                     paymentMethod === "card"
-                      ? "border-blue-500 bg-blue-50 shadow-md"
-                      : "border-slate-200 bg-white hover:border-blue-300 hover:bg-blue-50/50"
+                      ? "border-slate-400 bg-slate-50"
+                      : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50"
                   }`}
                 >
-                  <RadioGroupItem value="card" id="card" className="w-5 h-5" />
-                  <div className="flex items-center gap-3 flex-1">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <CreditCard className="w-5 h-5 text-blue-600" />
+                  <RadioGroupItem value="card" id="card" className="w-4 h-4" />
+                  <div className="flex items-center gap-2.5 flex-1">
+                    <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center">
+                      <CreditCard className="w-4 h-4 text-slate-700" strokeWidth={2} />
                     </div>
-                    <Label htmlFor="card" className="text-slate-900 font-semibold cursor-pointer flex-1">
+                    <Label htmlFor="card" className="text-slate-900 text-sm font-medium cursor-pointer flex-1">
                       Card Payment
                     </Label>
                   </div>
                 </label>
                 <label
                   htmlFor="upi"
-                  className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
+                  className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all duration-200 ${
                     paymentMethod === "upi"
-                      ? "border-blue-500 bg-blue-50 shadow-md"
-                      : "border-slate-200 bg-white hover:border-blue-300 hover:bg-blue-50/50"
+                      ? "border-slate-400 bg-slate-50"
+                      : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50"
                   }`}
                 >
-                  <RadioGroupItem value="upi" id="upi" className="w-5 h-5" />
-                  <div className="flex items-center gap-3 flex-1">
-                    <div className="p-2 bg-purple-100 rounded-lg">
-                      <Smartphone className="w-5 h-5 text-purple-600" />
+                  <RadioGroupItem value="upi" id="upi" className="w-4 h-4" />
+                  <div className="flex items-center gap-2.5 flex-1">
+                    <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center">
+                      <Smartphone className="w-4 h-4 text-slate-700" strokeWidth={2} />
                     </div>
-                    <Label htmlFor="upi" className="text-slate-900 font-semibold cursor-pointer flex-1">
+                    <Label htmlFor="upi" className="text-slate-900 text-sm font-medium cursor-pointer flex-1">
                       UPI Payment
                     </Label>
                   </div>
                 </label>
                 <label
                   htmlFor="pay_at_desk"
-                  className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
+                  className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all duration-200 ${
                     paymentMethod === "pay_at_desk"
-                      ? "border-blue-500 bg-blue-50 shadow-md"
-                      : "border-slate-200 bg-white hover:border-blue-300 hover:bg-blue-50/50"
+                      ? "border-slate-400 bg-slate-50"
+                      : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50"
                   }`}
                 >
-                  <RadioGroupItem value="pay_at_desk" id="pay_at_desk" className="w-5 h-5" />
-                  <div className="flex items-center gap-3 flex-1">
-                    <div className="p-2 bg-emerald-100 rounded-lg">
-                      <Store className="w-5 h-5 text-emerald-600" />
+                  <RadioGroupItem value="pay_at_desk" id="pay_at_desk" className="w-4 h-4" />
+                  <div className="flex items-center gap-2.5 flex-1">
+                    <div className="w-8 h-8 rounded bg-slate-100 flex items-center justify-center">
+                      <Store className="w-4 h-4 text-slate-700" strokeWidth={2} />
                     </div>
-                    <Label htmlFor="pay_at_desk" className="text-slate-900 font-semibold cursor-pointer flex-1">
+                    <Label htmlFor="pay_at_desk" className="text-slate-900 text-sm font-medium cursor-pointer flex-1">
                       Pay at Desk
                     </Label>
                   </div>
@@ -1092,10 +1082,10 @@ export default function CustomerPage() {
             </div>
 
             {/* Total */}
-            <div className="border-t-2 border-slate-200 pt-6 bg-gradient-to-br from-slate-50 to-white rounded-xl p-5">
+            <div className="border-t border-slate-200 pt-5">
               <div className="flex justify-between items-center">
-                <span className="text-slate-700 font-semibold text-lg">Total Amount</span>
-                <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                <span className="text-slate-700 font-medium text-base">Total Amount</span>
+                <span className="text-xl font-semibold text-slate-900">
                   ₹{totals.total.toFixed(2)}
                 </span>
               </div>
@@ -1105,21 +1095,21 @@ export default function CustomerPage() {
             <Button
               onClick={processPayment}
               disabled={!otpVerified || !paymentMethod}
-              className="w-full h-14 bg-gradient-to-r from-emerald-600 via-green-600 to-emerald-600 hover:from-emerald-700 hover:via-green-700 hover:to-emerald-700 text-white font-bold text-base rounded-xl shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/40 transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm rounded-lg shadow-sm hover:shadow transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {!otpVerified ? (
                 <>
-                  <Lock className="w-5 h-5 mr-2" />
+                  <Lock className="w-4 h-4 mr-2" strokeWidth={2} />
                   Verify OTP First
                 </>
               ) : !paymentMethod ? (
                 <>
-                  <CreditCard className="w-5 h-5 mr-2" />
+                  <CreditCard className="w-4 h-4 mr-2" strokeWidth={2} />
                   Select Payment Method
                 </>
               ) : (
                 <>
-                  <CheckCircle className="w-5 h-5 mr-2" />
+                  <CheckCircle className="w-4 h-4 mr-2" strokeWidth={2} />
                   Complete Payment
                 </>
               )}
