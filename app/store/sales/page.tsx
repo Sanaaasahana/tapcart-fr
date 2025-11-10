@@ -170,17 +170,19 @@ export default function StoreSalesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
       <StoreSidebar />
       <div className="lg:ml-64">
         <div className="p-6 lg:p-8">
           {/* Header */}
           <div className="mb-8 flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-slate-900 mb-2">Sales</h1>
-              <p className="text-slate-600">View all completed sales and customer payment details</p>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent mb-2">
+                Sales
+              </h1>
+              <p className="text-slate-600 font-medium">View all completed sales and customer payment details</p>
             </div>
-            <Button onClick={exportToCSV} className="bg-blue-600 hover:bg-blue-700">
+            <Button onClick={exportToCSV} className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg shadow-blue-500/30 font-semibold">
               <Download className="w-4 h-4 mr-2" />
               Export CSV
             </Button>
@@ -188,98 +190,108 @@ export default function StoreSalesPage() {
 
           {/* Statistics Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <Card className="border-0 shadow-sm bg-gradient-to-br from-blue-50 to-cyan-50">
+            <Card className="border border-slate-200 shadow-md hover:shadow-lg transition-shadow bg-gradient-to-br from-blue-50 via-white to-blue-50/50">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-slate-600">Total Sales</CardTitle>
-                <TrendingUp className="h-4 w-4 text-blue-600" />
+                <CardTitle className="text-sm font-semibold text-slate-700">Total Sales</CardTitle>
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <TrendingUp className="h-4 w-4 text-blue-600" />
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-slate-900">{totalSales}</div>
-                <p className="text-xs text-slate-500 mt-1">Completed transactions</p>
+                <div className="text-3xl font-bold text-slate-900">{totalSales}</div>
+                <p className="text-xs text-slate-600 mt-1 font-medium">Completed transactions</p>
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-sm bg-gradient-to-br from-green-50 to-emerald-50">
+            <Card className="border border-slate-200 shadow-md hover:shadow-lg transition-shadow bg-gradient-to-br from-green-50 via-white to-green-50/50">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-slate-600">Total Revenue</CardTitle>
-                <DollarSign className="h-4 w-4 text-green-600" />
+                <CardTitle className="text-sm font-semibold text-slate-700">Total Revenue</CardTitle>
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <DollarSign className="h-4 w-4 text-green-600" />
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-slate-900">₹{totalRevenue.toFixed(2)}</div>
-                <p className="text-xs text-slate-500 mt-1">Total earnings</p>
+                <div className="text-3xl font-bold text-slate-900">₹{totalRevenue.toFixed(2)}</div>
+                <p className="text-xs text-slate-600 mt-1 font-medium">Total earnings</p>
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-sm bg-gradient-to-br from-orange-50 to-amber-50">
+            <Card className="border border-slate-200 shadow-md hover:shadow-lg transition-shadow bg-gradient-to-br from-orange-50 via-white to-orange-50/50">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-slate-600">Total Discounts</CardTitle>
-                <Receipt className="h-4 w-4 text-orange-600" />
+                <CardTitle className="text-sm font-semibold text-slate-700">Total Discounts</CardTitle>
+                <div className="p-2 bg-orange-100 rounded-lg">
+                  <Receipt className="h-4 w-4 text-orange-600" />
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-slate-900">₹{totalDiscounts.toFixed(2)}</div>
-                <p className="text-xs text-slate-500 mt-1">Discounts given</p>
+                <div className="text-3xl font-bold text-slate-900">₹{totalDiscounts.toFixed(2)}</div>
+                <p className="text-xs text-slate-600 mt-1 font-medium">Discounts given</p>
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-sm bg-gradient-to-br from-purple-50 to-pink-50">
+            <Card className="border border-slate-200 shadow-md hover:shadow-lg transition-shadow bg-gradient-to-br from-purple-50 via-white to-purple-50/50">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-slate-600">Average Order</CardTitle>
-                <TrendingUp className="h-4 w-4 text-purple-600" />
+                <CardTitle className="text-sm font-semibold text-slate-700">Average Order</CardTitle>
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <TrendingUp className="h-4 w-4 text-purple-600" />
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-slate-900">
+                <div className="text-3xl font-bold text-slate-900">
                   ₹{totalSales > 0 ? (totalRevenue / totalSales).toFixed(2) : "0.00"}
                 </div>
-                <p className="text-xs text-slate-500 mt-1">Per transaction</p>
+                <p className="text-xs text-slate-600 mt-1 font-medium">Per transaction</p>
               </CardContent>
             </Card>
           </div>
 
           {/* Payment Methods Breakdown */}
-          <Card className="border-0 shadow-sm mb-6">
+          <Card className="border border-slate-200 shadow-md mb-6 bg-white">
             <CardHeader>
               <CardTitle className="text-lg font-bold text-slate-900">Payment Methods</CardTitle>
-              <CardDescription>Breakdown of payment methods used</CardDescription>
+              <CardDescription className="text-slate-600">Breakdown of payment methods used</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-4">
                 {Object.entries(paymentMethods).map(([method, count]) => (
-                  <div key={method} className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg">
-                    {getPaymentMethodIcon(method.toLowerCase().replace(/\s/g, "_"))}
-                    <span className="font-medium text-slate-900">{method}</span>
-                    <Badge variant="outline" className="ml-2">
+                  <div key={method} className="flex items-center gap-3 p-4 bg-gradient-to-br from-slate-50 to-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                    <div className="p-2 bg-white rounded-lg">
+                      {getPaymentMethodIcon(method.toLowerCase().replace(/\s/g, "_"))}
+                    </div>
+                    <span className="font-semibold text-slate-900 text-base">{method}</span>
+                    <Badge variant="outline" className="ml-2 px-3 py-1 bg-blue-100 text-blue-700 border-blue-300 font-semibold">
                       {count} {count === 1 ? "sale" : "sales"}
                     </Badge>
                   </div>
                 ))}
                 {Object.keys(paymentMethods).length === 0 && (
-                  <p className="text-slate-500">No payment data available</p>
+                  <p className="text-slate-600 font-medium">No payment data available</p>
                 )}
               </div>
             </CardContent>
           </Card>
 
           {/* Search */}
-          <Card className="border-0 shadow-sm mb-6">
+          <Card className="border border-slate-200 shadow-md mb-6 bg-white">
             <CardHeader>
               <CardTitle className="text-lg font-bold text-slate-900">Sales Records</CardTitle>
-              <CardDescription>Search and filter sales by order ID, customer phone, or payment method</CardDescription>
+              <CardDescription className="text-slate-600">Search and filter sales by order ID, customer phone, or payment method</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="relative mb-4">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 w-5 h-5" />
                 <Input
                   placeholder="Search by order ID, customer phone, name, or payment method..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 h-11 border-slate-300 focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
             </CardContent>
           </Card>
 
           {/* Sales Table */}
-          <Card className="border-0 shadow-sm">
+          <Card className="border border-slate-200 shadow-md bg-white">
             <CardHeader>
               <CardTitle className="text-xl font-bold text-slate-900">
                 All Sales ({filteredSales.length})
