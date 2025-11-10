@@ -12,7 +12,6 @@ const navigation = [
   { name: "All Products", href: "/store/all-products", icon: Package2 },
   { name: "Sales", href: "/store/sales", icon: TrendingUp },
   { name: "Orders", href: "/store/orders", icon: ShoppingCart },
-  { name: "Purchases", href: "/store/purchases", icon: ShoppingCart },
   { name: "Export Links", href: "/store/export", icon: Download },
 ]
 
