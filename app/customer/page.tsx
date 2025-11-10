@@ -529,9 +529,9 @@ export default function CustomerPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-stone-50 to-amber-50/50 py-8">
       <div className="container mx-auto px-4">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left / Main column */}
-          <div className="lg:col-span-2 space-y-6">
+        <div className="max-w-4xl mx-auto">
+          {/* Main column */}
+          <div className="space-y-6">
             {/* Header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
@@ -656,31 +656,6 @@ export default function CustomerPage() {
             </Card>
           </div>
 
-          {/* Right sidebar: Checkout summary & quick actions */}
-          <aside className="space-y-6">
-            <div className="sticky top-24">
-              <div className="rounded-2xl p-6 bg-white shadow-sm border border-stone-100">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h3 className="text-sm text-stone-500">Order Summary</h3>
-                    <div className="text-2xl font-bold text-stone-800">₹{totals.total.toFixed(2)}</div>
-                  </div>
-                  <div className="text-sm text-stone-500">{cart.length} items</div>
-                </div>
-
-                <div className="space-y-3">
-                  <Button onClick={() => { navigator.clipboard?.writeText(window.location.href); toast({ title: 'Link copied', description: 'Share this cart link.' }) }} variant="ghost" className="w-full h-10">Share Cart</Button>
-
-                  <div className="pt-3 border-t">
-                    <div className="text-xs text-stone-500">Need help?</div>
-                    <div className="text-sm text-stone-700 mt-1">Call store: <span className="font-medium">+91 80000 00000</span></div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-4 text-center text-xs text-stone-400">Safe & secure payments • 30-day returns • Support 9am–9pm</div>
-            </div>
-          </aside>
         </div>
       </div>
 
@@ -689,22 +664,17 @@ export default function CustomerPage() {
         <DialogContent className="max-w-2xl w-[95vw] sm:w-full bg-white rounded-2xl shadow-2xl p-6 overflow-auto">
           <DialogHeader>
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-teal-100 flex items-center justify-center">
-                  <Lock className="w-5 h-5 text-teal-700" strokeWidth={2} />
-                </div>
-                <div>
-                  <DialogTitle className="text-lg font-semibold text-stone-800">Secure Checkout</DialogTitle>
-                  <DialogDescription className="text-sm text-stone-500">Verify your number and choose payment method to complete your order.</DialogDescription>
-                </div>
+              <div>
+                <DialogTitle className="text-lg font-semibold text-stone-800">Secure Checkout</DialogTitle>
+                <DialogDescription className="text-sm text-stone-500">Verify your number and choose payment method to complete your order.</DialogDescription>
               </div>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setIsCheckoutOpen(false)}
-                className="h-8 w-8 rounded-lg hover:bg-stone-100"
+                className="h-10 w-10 rounded-lg hover:bg-stone-100"
               >
-                <X className="w-4 h-4 text-stone-600" />
+                <X className="w-6 h-6 text-stone-600" />
               </Button>
             </div>
           </DialogHeader>
@@ -753,7 +723,7 @@ export default function CustomerPage() {
               <Label htmlFor="coupon" className="text-sm font-medium text-stone-700 mb-2 block">Coupon code (optional)</Label>
               <div className="flex gap-3">
                 <Input id="coupon" value={couponCode} onChange={(e) => setCouponCode(e.target.value)} className="h-12 text-slate-900" />
-                <Button onClick={applyCoupon} className="h-12 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"><Tag className="w-4 h-4 mr-2" />Apply</Button>
+                <Button onClick={applyCoupon} className="h-12 px-4 bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white"><Tag className="w-4 h-4 mr-2" />Apply</Button>
               </div>
             </div>
 
