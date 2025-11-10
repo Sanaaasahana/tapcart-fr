@@ -23,9 +23,12 @@ export function StoreSidebar() {
   const handleLogout = async () => {
     try {
       await fetch("/api/store/auth/logout", { method: "POST" })
-      router.push("/store/login")
     } catch (error) {
       console.error("Logout error:", error)
+    } finally {
+      // Force a hard redirect to home page, clearing all history and cache
+      // This prevents back button from accessing protected pages
+      window.location.href = "/"
     }
   }
 
