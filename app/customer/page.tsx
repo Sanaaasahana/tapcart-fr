@@ -473,9 +473,9 @@ export default function CustomerPage() {
 
   if (!isMounted || !isCartLoaded) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-stone-50 to-teal-600/10">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-stone-50 to-teal-700/10">
         <div className="text-center">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-tr from-teal-600 to-cyan-600 mb-4 shadow-2xl">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-tr from-teal-700 to-cyan-700 mb-4 shadow-2xl">
             <ShoppingCart className="w-7 h-7 text-white" strokeWidth={1.6} />
           </div>
           <p className="text-stone-600 text-sm font-medium">Loading your cart...</p>
@@ -490,7 +490,7 @@ export default function CustomerPage() {
   const EmptyState = () => (
     <div className="text-center py-20">
       <div className="mx-auto inline-flex items-center justify-center w-20 h-20 rounded-xl bg-indigo-50 shadow-sm mb-6">
-        <ShoppingCart className="w-9 h-9 text-indigo-600" strokeWidth={1.6} />
+        <ShoppingCart className="w-9 h-9 text-indigo-700" strokeWidth={1.6} />
       </div>
       <h3 className="text-xl font-semibold text-stone-800 mb-2">Your cart is empty</h3>
       <p className="text-stone-600">Tap an NFC tag or scan a QR to add items. Explore the store for cute finds ✨</p>
@@ -527,7 +527,7 @@ export default function CustomerPage() {
   )
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-stone-50 to-teal-600/10 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-stone-50 to-teal-700/10 py-8">
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left / Main column */}
@@ -535,12 +535,12 @@ export default function CustomerPage() {
             {/* Header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-xl bg-gradient-to-tr from-teal-600 to-cyan-600 flex items-center justify-center shadow-2xl">
+                <div className="w-14 h-14 rounded-xl bg-gradient-to-tr from-teal-700 to-cyan-700 flex items-center justify-center shadow-2xl">
                   <ShoppingCart className="w-7 h-7 text-white" strokeWidth={1.6} />
                 </div>
                 <div>
                   <h1 className="text-3xl font-bold text-stone-800 leading-tight">Your Cart</h1>
-                 
+                  
                 </div>
               </div>
 
@@ -565,7 +565,7 @@ export default function CustomerPage() {
               </CardHeader>
               <CardContent>
                 <div className="flex gap-4 items-center">
-                  <Button onClick={handleNfcRead} disabled={!isNfcSupported || isNfcReading} className="flex-1 h-12 rounded-lg bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white shadow-md">
+                  <Button onClick={handleNfcRead} disabled={!isNfcSupported || isNfcReading} className="flex-1 h-12 rounded-lg bg-gradient-to-r from-teal-700 to-cyan-700 hover:from-teal-800 hover:to-cyan-800 text-white shadow-md">
                     {isNfcReading ? (
                       <>
                         <div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -602,7 +602,7 @@ export default function CustomerPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center">
-                      <ShoppingCart className="w-5 h-5 text-indigo-600" strokeWidth={1.6} />
+                      <ShoppingCart className="w-5 h-5 text-indigo-700" strokeWidth={1.6} />
                     </div>
                     <div>
                       <CardTitle className="text-lg font-semibold">Items</CardTitle>
@@ -612,7 +612,7 @@ export default function CustomerPage() {
 
                   <div>
                     {cart.length > 0 && (
-                      <Button onClick={handleCheckout} className="bg-gradient-to-r from-teal-600 to-cyan-600 text-white shadow-sm">Checkout</Button>
+                      <Button onClick={handleCheckout} className="bg-gradient-to-r from-teal-700 to-cyan-700 text-white shadow-sm">Checkout</Button>
                     )}
                   </div>
                 </div>
@@ -650,7 +650,7 @@ export default function CustomerPage() {
 
                       {/* Checkout button below total */}
                       <div className="mt-4">
-                        <Button onClick={handleCheckout} className="w-full h-12 bg-gradient-to-r from-teal-600 to-cyan-600 text-white rounded-lg shadow-md">Proceed to Checkout</Button>
+                        <Button onClick={handleCheckout} className="w-full h-12 bg-gradient-to-r from-teal-700 to-cyan-700 text-white rounded-lg shadow-md">Proceed to Checkout</Button>
                       </div>
                     </div>
                   </div>
@@ -679,7 +679,7 @@ export default function CustomerPage() {
 
                   {/* Checkout button below totals in sidebar as well */}
                   <div className="mt-4">
-                    <Button onClick={handleCheckout} className="w-full h-12 bg-gradient-to-r from-teal-600 to-cyan-600 text-white rounded-lg shadow-md">Proceed to Checkout</Button>
+                    <Button onClick={handleCheckout} className="w-full h-12 bg-gradient-to-r from-teal-700 to-cyan-700 text-white rounded-lg shadow-md">Proceed to Checkout</Button>
                   </div>
 
                   <Button onClick={() => { navigator.clipboard?.writeText(window.location.href); toast({ title: 'Link copied', description: 'Share this cart link.' }) }} variant="ghost" className="w-full h-10">Share Cart</Button>
@@ -719,9 +719,9 @@ export default function CustomerPage() {
               <div className="flex gap-3">
                 <div className="relative flex-1">
                   <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-stone-400 w-4 h-4" strokeWidth={1.6} />
-                  <Input id="phone" type="tel" placeholder="Enter your phone number" value={phone} onChange={(e) => setPhone(e.target.value)} className="pl-10 h-12 text-black" />
+                  <Input id="phone" type="tel" placeholder="Enter your phone number" value={phone} onChange={(e) => setPhone(e.target.value)} className="pl-10 h-12 text-black placeholder:text-stone-400" />
                 </div>
-                <Button onClick={sendOTP} disabled={otpSent} className="h-12 px-4 bg-gradient-to-r from-teal-600 to-cyan-600 text-white">
+                <Button onClick={sendOTP} disabled={otpSent} className="h-12 px-4 bg-gradient-to-r from-teal-700 to-cyan-700 text-white">
                   {otpSent ? (
                     <>
                       <CheckCircle className="w-4 h-4 mr-2" /> Sent
@@ -738,11 +738,11 @@ export default function CustomerPage() {
               <div>
                 <Label htmlFor="otp" className="text-sm font-medium text-stone-700 mb-2 block">Enter OTP</Label>
                 <div className="flex gap-3 items-center">
-                  <Input id="otp" value={otp} onChange={(e) => setOtp(e.target.value)} maxLength={6} className="h-12 text-center font-semibold tracking-widest text-lg text-black" disabled={otpVerified} />
+                  <Input id="otp" value={otp} onChange={(e) => setOtp(e.target.value)} maxLength={6} className="h-12 text-center font-semibold tracking-widest text-lg text-black placeholder:text-stone-400" disabled={otpVerified} />
                   {otpVerified ? (
                     <Button disabled className="h-12 bg-teal-50 text-teal-700">Verified</Button>
                   ) : (
-                    <Button onClick={verifyOTP} disabled={isVerifying} className="h-12 px-4 bg-gradient-to-r from-teal-600 to-cyan-600 text-white">
+                    <Button onClick={verifyOTP} disabled={isVerifying} className="h-12 px-4 bg-gradient-to-r from-teal-700 to-cyan-700 text-white">
                       {isVerifying ? "Verifying..." : "Verify"}
                     </Button>
                   )}
@@ -755,8 +755,8 @@ export default function CustomerPage() {
             <div>
               <Label htmlFor="coupon" className="text-sm font-medium text-stone-700 mb-2 block">Coupon code (optional)</Label>
               <div className="flex gap-3">
-                <Input id="coupon" value={couponCode} onChange={(e) => setCouponCode(e.target.value)} className="h-12" />
-                <Button onClick={applyCoupon} className="h-12 px-4 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white"><Tag className="w-4 h-4 mr-2" />Apply</Button>
+                <Input id="coupon" value={couponCode} onChange={(e) => setCouponCode(e.target.value)} className="h-12 text-black placeholder:text-stone-400" />
+                <Button onClick={applyCoupon} className="h-12 px-4 bg-gradient-to-r from-indigo-700 to-indigo-800 text-white"><Tag className="w-4 h-4 mr-2" />Apply</Button>
               </div>
             </div>
 
@@ -812,7 +812,7 @@ export default function CustomerPage() {
                 <div className="text-xl font-bold text-teal-800">₹{totals.total.toFixed(2)}</div>
               </div>
 
-              <Button onClick={processPayment} disabled={!otpVerified || !paymentMethod} className="w-full h-12 bg-gradient-to-r from-teal-600 to-cyan-600 text-white rounded-lg shadow-md">
+              <Button onClick={processPayment} disabled={!otpVerified || !paymentMethod} className="w-full h-12 bg-gradient-to-r from-teal-700 to-cyan-700 text-white rounded-lg shadow-md">
                 {!otpVerified ? (
                   <>
                     <Lock className="w-4 h-4 mr-2" /> Verify OTP First
