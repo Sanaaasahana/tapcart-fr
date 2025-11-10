@@ -10,7 +10,7 @@ export default async function AdminUsersPage() {
   const session = await getAdminSession()
 
   if (!session?.isAuthenticated) {
-    redirect("/admin/login")
+    redirect("/")
   }
 
   const stores = await getAllStores()
