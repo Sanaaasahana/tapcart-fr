@@ -268,6 +268,7 @@ export default function StoreOrdersPage() {
                         <Button
                           variant="outline"
                           onClick={() => window.open(`/api/customer/bill/${order.order_id}`, "_blank")}
+                          className="bg-blue-600 text-white border-blue-600 hover:bg-blue-700 hover:text-white"
                         >
                           <Download className="w-4 h-4 mr-2" />
                           View Bill
