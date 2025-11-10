@@ -39,12 +39,14 @@ export default function AdminDashboardPage() {
       try {
         const res = await fetch("/admin/session")
         if (!res.ok) {
-          router.push("/admin/login")
+          // Redirect to home page instead of login page after logout
+          window.location.href = "/"
           return
         }
         setIsCheckingAuth(false)
       } catch (e) {
-        router.push("/admin/login")
+        // Redirect to home page on error
+        window.location.href = "/"
       }
     }
     checkAuth()
