@@ -57,6 +57,11 @@ export default function StoreProductsPage() {
     try {
       const res = await fetch("/api/store/products")
       if (!res.ok) {
+        if (res.status === 401) {
+          // Redirect to home page instead of login after logout
+          window.location.href = "/"
+          return
+        }
         console.error("Failed to load products:", res.status)
         return
       }
