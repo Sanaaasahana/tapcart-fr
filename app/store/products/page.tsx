@@ -162,8 +162,11 @@ export default function StoreProductsPage() {
     }
   }
 
-  // Filter and search logic
+  // Filter and search logic - exclude sold products (stock = 0) from inventory
   const filteredItems = items.filter(item => {
+    // Exclude products with stock = 0 from inventory
+    if (item.stock === 0) return false
+    
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          item.custom_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          item.category.toLowerCase().includes(searchTerm.toLowerCase())
@@ -173,9 +176,10 @@ export default function StoreProductsPage() {
     return matchesSearch && matchesCategory
   })
 
-  // Calculate statistics
-  const totalValue = items.reduce((sum, item) => sum + item.price, 0)
-  const lowStockItems = items.filter(item => item.stock < 10)
+  // Calculate statistics - only for in-stock items
+  const inStockItems = items.filter(item => item.stock > 0)
+  const totalValue = inStockItems.reduce((sum, item) => sum + (item.price * item.stock), 0)
+  const lowStockItems = inStockItems.filter(item => item.stock < 10)
   const outOfStockItems = items.filter(item => item.stock === 0)
 
   // File upload handler
@@ -285,7 +289,7 @@ export default function StoreProductsPage() {
                 <Package2 className="h-4 w-4 text-blue-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-slate-900">{items.length}</div>
+                <div className="text-2xl font-bold text-slate-900">{inStockItems.length}</div>
                 <p className="text-xs text-slate-500 mt-1">Active items in inventory</p>
               </CardContent>
             </Card>
@@ -310,7 +314,7 @@ export default function StoreProductsPage() {
                 <div className="text-2xl font-bold text-slate-900">
                   ₹{totalValue.toFixed(2)}
                 </div>
-                <p className="text-xs text-slate-500 mt-1">Inventory worth</p>
+                <p className="text-xs text-slate-500 mt-1">In-stock inventory worth</p>
               </CardContent>
             </Card>
           </div>
@@ -607,8 +611,10 @@ export default function StoreProductsPage() {
                   <Package2 className="mx-auto h-12 w-12 text-slate-400 mb-4" />
                   <h3 className="text-lg font-medium text-slate-900 mb-2">No products found</h3>
                   <p className="text-slate-500">
-                    {items.length === 0 
-                      ? "Get started by adding your first product above."
+                    {inStockItems.length === 0 
+                      ? items.length === 0
+                        ? "Get started by adding your first product above."
+                        : "All products have been sold. Sold products are shown in the 'All Products' page."
                       : "Try adjusting your search or filter criteria."
                     }
                   </p>
