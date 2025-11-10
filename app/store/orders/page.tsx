@@ -49,7 +49,8 @@ export default function StoreOrdersPage() {
         setOrders(data.orders || [])
       } else {
         if (response.status === 401) {
-          router.push("/store/login")
+          // Redirect to home page instead of login after logout
+          window.location.href = "/"
         }
       }
     } catch (error) {
