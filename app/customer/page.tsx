@@ -661,22 +661,18 @@ export default function CustomerPage() {
 
       {/* Checkout Dialog (refined visuals) */}
       <Dialog open={isCheckoutOpen} onOpenChange={setIsCheckoutOpen}>
-        <DialogContent className="max-w-2xl w-[95vw] sm:w-full bg-white rounded-2xl shadow-2xl p-6 overflow-auto">
-          <DialogHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <DialogTitle className="text-lg font-semibold text-stone-800">Secure Checkout</DialogTitle>
-                <DialogDescription className="text-sm text-stone-500">Verify your number and choose payment method to complete your order.</DialogDescription>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsCheckoutOpen(false)}
-                className="h-10 w-10 rounded-lg hover:bg-stone-100"
-              >
-                <X className="w-6 h-6 text-stone-600" />
-              </Button>
-            </div>
+        <DialogContent className="max-w-2xl w-[95vw] sm:w-full max-h-[95svh] sm:max-h-[90svh] bg-white rounded-2xl shadow-2xl p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] overflow-y-auto">
+          <DialogHeader className="relative pb-4 text-center">
+            <DialogTitle className="text-lg font-semibold text-stone-800">Secure Checkout</DialogTitle>
+            <DialogDescription className="text-sm text-stone-500">Verify your number and choose payment method to complete your order.</DialogDescription>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsCheckoutOpen(false)}
+              className="absolute right-0 top-0 h-10 w-10 rounded-lg hover:bg-stone-100"
+            >
+              <X className="w-6 h-6 text-stone-600" />
+            </Button>
           </DialogHeader>
 
           <div className="mt-6 space-y-5">
@@ -686,7 +682,7 @@ export default function CustomerPage() {
               <div className="flex gap-3">
                 <div className="relative flex-1">
                   <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-stone-400 w-4 h-4" strokeWidth={1.6} />
-                  <Input id="phone" type="tel" placeholder="Enter your phone number" value={phone} onChange={(e) => setPhone(e.target.value)} className="pl-10 h-12 text-slate-900" />
+                  <Input id="phone" type="tel" placeholder="Enter your phone number" value={phone} onChange={(e) => setPhone(e.target.value)} className="pl-10 h-12 text-[16px] sm:text-base text-slate-900" />
                 </div>
                 <Button onClick={sendOTP} disabled={otpSent} className="h-12 px-4 bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white">
                   {otpSent ? (
@@ -722,7 +718,7 @@ export default function CustomerPage() {
             <div>
               <Label htmlFor="coupon" className="text-sm font-medium text-stone-700 mb-2 block">Coupon code (optional)</Label>
               <div className="flex gap-3">
-                <Input id="coupon" value={couponCode} onChange={(e) => setCouponCode(e.target.value)} className="h-12 text-slate-900" />
+                <Input id="coupon" value={couponCode} onChange={(e) => setCouponCode(e.target.value)} className="h-12 text-[16px] sm:text-base text-slate-900" />
                 <Button onClick={applyCoupon} className="h-12 px-4 bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white"><Tag className="w-4 h-4 mr-2" />Apply</Button>
               </div>
             </div>
