@@ -473,7 +473,7 @@ export default function CustomerPage() {
 
   if (!isMounted || !isCartLoaded) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-amber-50 via-stone-50 to-amber-50/50">
+      <div className="min-h-[100svh] flex items-center justify-center bg-amber-50 pb-[env(safe-area-inset-bottom)]">
         <div className="text-center">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-tr from-teal-600 to-cyan-600 mb-4 shadow-2xl">
             <ShoppingCart className="w-7 h-7 text-white" strokeWidth={1.6} />
@@ -527,7 +527,7 @@ export default function CustomerPage() {
   )
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-stone-50 to-amber-50/50 py-8">
+    <div className="min-h-[100svh] bg-amber-50 py-8 pb-[env(safe-area-inset-bottom)]">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto">
           {/* Main column */}
@@ -801,7 +801,7 @@ export default function CustomerPage() {
 
       {/* Payment confirmation alert */}
       {paymentConfirmed && confirmedOrderId && (
-        <div className="fixed left-1/2 -translate-x-1/2 bottom-6 z-50">
+        <div className="fixed left-1/2 -translate-x-1/2 bottom-[calc(1.5rem+env(safe-area-inset-bottom))] z-50">
           <div className="bg-white rounded-xl shadow-xl p-4 border border-stone-100 flex items-center gap-4">
             <div className="w-10 h-10 rounded-md bg-emerald-50 flex items-center justify-center">
               <CheckCircle className="w-5 h-5 text-emerald-600" />
