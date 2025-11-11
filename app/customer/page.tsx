@@ -493,7 +493,7 @@ export default function CustomerPage() {
         <ShoppingCart className="w-9 h-9 text-indigo-600" strokeWidth={1.6} />
       </div>
       <h3 className="text-xl font-semibold text-stone-800 mb-2">Your cart is empty</h3>
-      <p className="text-stone-600">Tap an NFC tag or scan a QR to add items. Explore the store for cute finds ✨</p>
+      <p className="text-stone-600">Tap an NFC tag to add items. Explore the store for cute finds ✨</p>
     </div>
   )
 
@@ -645,7 +645,7 @@ export default function CustomerPage() {
                       
                       {cart.length > 0 && (
                         <Button onClick={handleCheckout} className="w-full mt-4 h-12 bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white rounded-lg shadow-md">
-                          <Checkout className="w-4 h-4 mr-2" strokeWidth={2} />
+        
                           Proceed to Checkout
                         </Button>
                       )}
@@ -665,14 +665,8 @@ export default function CustomerPage() {
           <DialogHeader className="relative pb-4 text-center">
             <DialogTitle className="text-lg font-semibold text-stone-800">Secure Checkout</DialogTitle>
             <DialogDescription className="text-sm text-stone-500">Verify your number and choose payment method to complete your order.</DialogDescription>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsCheckoutOpen(false)}
-              className="absolute right-0 top-0 h-10 w-10 rounded-lg hover:bg-stone-100"
-            >
-              <X className="w-6 h-6 text-stone-600" />
-            </Button>
+           <Button variant="ghost" size="icon" onClick={() => setIsCheckoutOpen(false)} className="absolute -right-2 -top-2 h-10 w-10 rounded-lg hover:bg-stone-100" > <X className="w-6 h-6 text-stone-600" /> </Button>
+
           </DialogHeader>
 
           <div className="mt-6 space-y-5">
@@ -820,3 +814,4 @@ export default function CustomerPage() {
     </div>
   )
 }
+
